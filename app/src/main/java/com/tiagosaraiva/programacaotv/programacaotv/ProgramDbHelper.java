@@ -21,22 +21,18 @@ public class ProgramDbHelper extends SQLiteOpenHelper {
     private static final String COMMA_SEP = ",";
     private static final String TABLE_NAME = "programinfo";
     /* Inner class that defines the table contents */
-    public static class ProgramEntry  {
 
-        static final String COLUMN_NAME_PROGRAM = "PROGRAMNAME";
-        static final String COLUMN_NAME_CHANNEL = "PROGRAMCHANNEL";
-        static final String COLUMN_NAME_DESCRIPTION = "DESCRIPTION";
-        static final String COLUMN_NAME_IMAGE_FILE = "PROGRAMIMAGE";
-        static final String COLUMN_NAME_IMDB_URL = "PROGRAMIMDB";
-    }
 
     static final String SQL_CREATE_TABLE =
             "CREATE TABLE " + TABLE_NAME + " (" +
                     ProgramEntry.COLUMN_NAME_PROGRAM + TEXT_TYPE + COMMA_SEP +
                     ProgramEntry.COLUMN_NAME_CHANNEL + TEXT_TYPE + COMMA_SEP +
-                    ProgramEntry.COLUMN_NAME_DESCRIPTION + TEXT_TYPE + COMMA_SEP +
-                    ProgramEntry.COLUMN_NAME_IMAGE_FILE + TEXT_TYPE + COMMA_SEP +
-                    ProgramEntry.COLUMN_NAME_IMDB_URL + TEXT_TYPE  +
+                    ProgramEntry.COLUMN_NAME_MEO_DESCRIPTION + TEXT_TYPE + COMMA_SEP +
+                    ProgramEntry.COLUMN_NAME_IMDB_DESCRIPTION + TEXT_TYPE + COMMA_SEP +
+                    ProgramEntry.COLUMN_NAME_IMDB_IMAGE_FILE + TEXT_TYPE  + COMMA_SEP +
+                    ProgramEntry.COLUMN_NAME_IMDB_URL + TEXT_TYPE + COMMA_SEP +
+                    ProgramEntry.COLUMN_NAME_TRAKT_IMAGE_FILE + COMMA_SEP +
+                    ProgramEntry.COLUMN_NAME_TRAKT_URL + TEXT_TYPE  +
                     " )";
 
     static final String SQL_DELETE_ENTRIES =
@@ -63,37 +59,33 @@ public class ProgramDbHelper extends SQLiteOpenHelper {
     public void onDowngrade(SQLiteDatabase db, int oldVersion, int newVersion) {
         onUpgrade(db, oldVersion, newVersion);
     }
-
-    public boolean programAddEntry(String programName, String channel, String description, String imagefile, String imdblink)
+    public void programAddEntry(ProgramEntry entry)
+    {
+        programAddEntry(entry.ProgramName, entry.ChannelInitials, entry.MeoDesc, entry.ShortMeoDesc, entry.IMDBDesc, entry.IMDBImageFile, entry.IMDBUrl, entry.TraktImageFile, entry.TraktUrl);
+    }
+    public void programAddEntry(String programName, String channel, String description, String shortdescription, String imdbdesc, String imagefile, String imdblink, String traktimage, String trakturl)
     {
         SQLiteDatabase writableCacheDatabase = this.getWritableDatabase();
 
-        if (date == "")
-        {
-            date = DateHelper.getCurrentDateTimeString();
-        }
-        Log.d("CACHEHELPER", "cacheAddEntry: Add cache entry, channel: "+channel+", date: "+ date);
+        Log.d("PROGRAMDBHELPER", "cacheAddEntry: Add cache entry, channel: "+channel+", program: "+ programName + ", desc: " +description);
 
         // Create a new map of values, where column names are the keys
         ContentValues values = new ContentValues();
-        values.put(CacheEntry.COLUMN_NAME_CHANNEL, channel);
-        values.put(CacheEntry.COLUMN_NAME_DATE, date);
+        values.put(ProgramEntry.COLUMN_NAME_PROGRAM, programName);
+        values.put(ProgramEntry.COLUMN_NAME_CHANNEL, channel);
+        values.put(ProgramEntry.COLUMN_NAME_MEO_DESCRIPTION, description);
+        values.put(ProgramEntry.COLUMN_NAME_SHORT_DESCRIPTION, shortdescription);
+        values.put(ProgramEntry.COLUMN_NAME_IMDB_DESCRIPTION, imdbdesc);
+        values.put(ProgramEntry.COLUMN_NAME_IMDB_IMAGE_FILE, imagefile);
+        values.put(ProgramEntry.COLUMN_NAME_IMDB_URL, imdblink);
+        values.put(ProgramEntry.COLUMN_NAME_TRAKT_IMAGE_FILE, traktimage);
+        values.put(ProgramEntry.COLUMN_NAME_TRAKT_URL, trakturl);
         // insert value
         writableCacheDatabase.replace(TABLE_NAME, null, values);
         writableCacheDatabase.close();
-        String verify = DateHelper.getDateTimeString(getUpdateDate(channel));
-
-        return (date == verify);
     }
 
-
-    public boolean cacheAddEntry(String channel)
-    {
-        return cacheAddEntry(channel, "");
-    }
-
-
-    public void resetCache()
+    public void resetDB()
     {
         Log.d("CACHEHELPER", "resetCache");
         SQLiteDatabase writableCacheDatabase = this.getWritableDatabase();
@@ -103,17 +95,23 @@ public class ProgramDbHelper extends SQLiteOpenHelper {
         writableCacheDatabase.execSQL(ProgramDbHelper.SQL_CREATE_TABLE);
     }
 
-    public Date getUpdateDate(String channel) {
+    public ProgramEntry getProgram(String programName) {
         SQLiteDatabase readableCacheDatabase;
 
         readableCacheDatabase = this.getReadableDatabase();
 
-        String selection = CacheEntry.COLUMN_NAME_CHANNEL + " = ?";
-        String sortOrder = CacheEntry.COLUMN_NAME_DATE + " DESC";
-        String[] selectionArgs = { channel };
+        String selection = ProgramEntry.COLUMN_NAME_PROGRAM + " = ?";
+        String sortOrder = null;
+        String[] selectionArgs = { programName };
         String[] projection = {
-                CacheEntry.COLUMN_NAME_CHANNEL,
-                CacheEntry.COLUMN_NAME_DATE
+                ProgramEntry.COLUMN_NAME_PROGRAM,
+                ProgramEntry.COLUMN_NAME_CHANNEL,
+                ProgramEntry.COLUMN_NAME_MEO_DESCRIPTION,
+                ProgramEntry.COLUMN_NAME_IMDB_DESCRIPTION,
+                ProgramEntry.COLUMN_NAME_IMDB_IMAGE_FILE,
+                ProgramEntry.COLUMN_NAME_IMDB_URL,
+                ProgramEntry.COLUMN_NAME_TRAKT_IMAGE_FILE,
+                ProgramEntry.COLUMN_NAME_TRAKT_URL
         };
         Cursor c = readableCacheDatabase.query(
                 TABLE_NAME,        // The table to query
@@ -124,20 +122,14 @@ public class ProgramDbHelper extends SQLiteOpenHelper {
                 null,                                     // don't filter by row groups
                 sortOrder                                 // The sort order
         );
-        String date = "";
-        //Cursor c = readableCacheDatabase.rawQuery("select * from " + TABLE_NAME + " where " + CacheEntry.COLUMN_NAME_CHANNEL + " = '" + channel + "'", null);
+
         if (c != null) {
             c.moveToFirst();
+            ProgramEntry ret = new ProgramEntry(c.getString(0), c.getString(1), c.getString(2), c.getString(3), c.getString(4), c.getString(5), c.getString(6), c.getString(7), c.getString(8));
+            Log.d("PROGRAMDBHELPER", "getProgram: title: " + ret.ProgramName + ", channel: " + ret.ChannelInitials);
+            return ret;
 
-            try {
-                date = c.getString(1);
-            } catch (CursorIndexOutOfBoundsException ex) {
-
-                Log.e("CACHEHELPER", "Hello... is it me you're looking for?");
-                //todo: handle your shit
-            }
-            Log.d("CACHEHELPER", "getUpdateDate: channel: " + channel + ", date: " + date);
         }
-        return DateHelper.getConvertedDateTime(date);
+        return null;
     }
 }

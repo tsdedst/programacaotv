@@ -1,7 +1,6 @@
 package com.tiagosaraiva.programacaotv.programacaotv;
 
 import android.content.Context;
-import android.support.annotation.NonNull;
 import android.util.Log;
 
 import org.json.JSONArray;
@@ -18,11 +17,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.Collection;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.Date;
 
@@ -51,39 +46,34 @@ public class SapoEPGHelper {
             ChannelName = name;
         }
     }
-    public class Program {
-        String Sigla;
-        String ChannelName;
-        String Description;
+    public class EpisodeEntry {
+        ProgramEntry Program;
         String StartTime;
         String EndTime;
-        String ShortDescription;
-        String ProgramName;
         String ProgramSeason;
         String ProgramEpisode;
         String Id;
 
-        public Program(String sigla,
-                       String channelname,
-                       String description,
-                       String starttime,
-                       String endtime,
-                       String shortdesc,
-                       String programname,
-                       String programseason,
-                       String programepisode,
-                       String id)
+        public EpisodeEntry(ProgramEntry prog,
+                            String starttime,
+                            String endtime,
+                            String programseason,
+                            String programepisode,
+                            String id)
         {
-            this.Sigla =  sigla;
-            this.ChannelName =  channelname;
-            this.Description =  description;
+            this.Program =  prog;
             this.StartTime =  starttime;
             this.EndTime =  endtime;
-            this.ShortDescription =  shortdesc;
-            this.ProgramName =  programname;
             this.ProgramSeason =  programseason;
             this.ProgramEpisode =  programepisode;
             this.Id =  id;
+        }
+
+        @Override
+        public String toString() {
+            // return super.toString();
+            String ret = Program.toString() + ": Start time: " + StartTime + ", End Time: " + EndTime + ", Season: " + ProgramSeason + ", Episode: " +ProgramEpisode;
+            return ret;
         }
     }
 
@@ -199,7 +189,7 @@ public class SapoEPGHelper {
         }
         else
         {
-            Log.d("PROG", "No need to update Program List for: "+ channelInitials);
+            Log.d("PROG", "No need to update EpisodeEntry List for: "+ channelInitials);
             try {
                 JSONObject channelList = new JSONObject(readFromFile(mContext, channelInitials));
                 return channelList;
@@ -214,21 +204,21 @@ public class SapoEPGHelper {
 
     }
 
-    public List<Program> GetProgramArrayList(String channelInitials) {
+    public List<EpisodeEntry> GetProgramArrayList(String channelInitials) {
         return GetProgramArrayList(channelInitials, false);
     }
-    public List<Program> GetProgramArrayList(String channelInitials, boolean forceUpdate) {
-        List<Program> ret = new ArrayList<Program>();
+    public List<EpisodeEntry> GetProgramArrayList(String channelInitials, boolean forceUpdate) {
+        List<EpisodeEntry> ret = new ArrayList<EpisodeEntry>();
         JSONObject jsonlist = GetProgramList(channelInitials, forceUpdate);
         Log.d("SAPOEPGHELPER", "JSON LIST" + jsonlist.toString());
         try {
             JSONObject response = jsonlist.getJSONObject("GetChannelByDateIntervalResponse");
             JSONObject result = response.getJSONObject("GetChannelByDateIntervalResult");
             JSONObject programs = result.getJSONObject("Programs");
-            JSONArray list = programs.getJSONArray("Program");
+            JSONArray list = programs.getJSONArray("EpisodeEntry");
             for(int i = 0; i < list.length(); i++){
                 String sigla = GetJSONString(list.getJSONObject(i), "ChannelSigla");
-                String channelname = GetJSONString(list.getJSONObject(i),"ChannelName");
+                //String channelname = GetJSONString(list.getJSONObject(i),"ChannelName");
                 String description = GetJSONString(list.getJSONObject(i),"Description");
                 String starttime = GetJSONString(list.getJSONObject(i),"StartTime");
                 String endtime= GetJSONString(list.getJSONObject(i),"EndTime");
@@ -248,8 +238,11 @@ public class SapoEPGHelper {
                     Log.e("SAPOEPGHELPER", "Problem getting season or object");
                 }
 
-                Log.d("PROGRAM", "sigla " + sigla +" channelname " + channelname +" description " + description +" starttime " + starttime +" endtime " + endtime +" programseries " + programseason +" programepisode " + programepisode);
-                ret.add(new Program(sigla, channelname, description, starttime,endtime,shortdesc,programname,programseason,programepisode,id));
+                ProgramEntry prog = new ProgramEntry(programname, sigla, description, shortdesc);
+                Log.d("PROGRAM", "Program: " + prog.toString());
+                EpisodeEntry ep = new EpisodeEntry(prog, starttime,endtime,programseason,programepisode,id);
+                Log.d("PROGRAM", "Episode: " +ep.toString());
+                ret.add(ep);
             }
             return ret;
 
