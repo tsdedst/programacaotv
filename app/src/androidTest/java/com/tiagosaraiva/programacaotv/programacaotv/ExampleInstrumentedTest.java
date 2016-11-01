@@ -58,7 +58,8 @@ public class ExampleInstrumentedTest {
         Log.d("TEST 4", "Json object");
         SapoEPGHelper s = new SapoEPGHelper(appContext);
         JSONObject hi = s.GetChannelByDateInterval("RTP1","2016-10-30","2016-11-04");
-        Log.d("TEST", hi.toString());
+
+        if (hi != null ) Log.d("TEST", hi.toString());
 
 
         Log.d("TEST 5", "Json object List");

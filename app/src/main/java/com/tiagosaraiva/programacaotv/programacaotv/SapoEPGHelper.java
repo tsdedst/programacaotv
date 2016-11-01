@@ -88,7 +88,7 @@ public class SapoEPGHelper {
         return GetChannelList(false);
     }
     public JSONObject GetChannelList(boolean forceUpdate) {
-        String action = BASEURL + "GetDetailedChannelListJSON";
+        String action = BASEURL + "GetChannelListJSON";
         Date lastUpdateDate = mCache.getUpdateDate(CHANNELLISTNAME);
 
         Calendar updateThresholdDate = Calendar.getInstance();
@@ -102,9 +102,13 @@ public class SapoEPGHelper {
                     " (" + updateChannelListAge + " days ago.)");
 
             JSONObject newChannelList = downloadFromDaInterwebz(action);
-            writeToFile(newChannelList.toString(), mContext, CHANNELLISTNAME);
-            mCache.cacheAddEntry(CHANNELLISTNAME);
-            return newChannelList;
+            if (newChannelList != null) {
+                writeToFile(newChannelList.toString(), mContext, CHANNELLISTNAME);
+                mCache.cacheAddEntry(CHANNELLISTNAME);
+                return newChannelList;
+            }
+            else
+                return null;
         }
         else
         {
@@ -116,7 +120,7 @@ public class SapoEPGHelper {
             catch (JSONException ex)
             {
                 //todo: handle you shiiiiit
-                Log.e("PROG", "getChannelList Cannto read file, trying to update from web");
+                Log.e("PROG", "getChannelList Cannot read file, trying to update from web");
                 return GetChannelList(true);
             }
         }
@@ -215,7 +219,7 @@ public class SapoEPGHelper {
             JSONObject response = jsonlist.getJSONObject("GetChannelByDateIntervalResponse");
             JSONObject result = response.getJSONObject("GetChannelByDateIntervalResult");
             JSONObject programs = result.getJSONObject("Programs");
-            JSONArray list = programs.getJSONArray("EpisodeEntry");
+            JSONArray list = programs.getJSONArray("Program");
             for(int i = 0; i < list.length(); i++){
                 String sigla = GetJSONString(list.getJSONObject(i), "ChannelSigla");
                 //String channelname = GetJSONString(list.getJSONObject(i),"ChannelName");
@@ -235,7 +239,7 @@ public class SapoEPGHelper {
                     programseason = GetJSONString(seriesObject, "ValueOf");
                     programepisode = GetJSONString(episodeObject, "ValueOf");
                 } catch (JSONException ex) {
-                    Log.e("SAPOEPGHELPER", "Problem getting season or object");
+                    Log.e("SAPOEPGHELPER", "Problem getting season or episode object");
                 }
 
                 ProgramEntry prog = new ProgramEntry(programname, sigla, description, shortdesc);
@@ -248,7 +252,7 @@ public class SapoEPGHelper {
 
         } catch (JSONException ex) {
             //todo: handle you shiiiiit
-            Log.e("SAPOEPGHELPER", "getChannelListStringArray Cannot get JSON object" );
+            Log.e("SAPOEPGHELPER", "GetProgramArrayList Cannot get JSON object: " +ex.toString() );
             return null;
         }
     }
@@ -314,7 +318,7 @@ public class SapoEPGHelper {
             j.execute(urlAction);
             try{
                 String result = j.get();
-                Log.d("EPGHELPER", "downloadFromDaInterwebz: result: " + result);
+
                 try
                 {
                     JSONObject ret = new JSONObject(result);
@@ -322,7 +326,7 @@ public class SapoEPGHelper {
                 } catch (JSONException ex)
                 {
                     //todo: handle you shiiiiit
-                    Log.e("EPGHELPER", "handle your shit m8");
+                    Log.e("EPGHELPER", "GetChannelByDateInterval JSON Exception, result from url: '" + url + "' is: '" + result + "'");
                     return null;
                 }
             } catch(InterruptedException ex)
