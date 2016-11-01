@@ -24,6 +24,13 @@ public class ExampleInstrumentedTest {
         Context appContext = InstrumentationRegistry.getTargetContext();
 
         assertEquals("com.tiagosaraiva.programacaotv.programacaotv", appContext.getPackageName());
+    }
+
+
+    @Test
+    public void Tzsest01() throws Exception {
+        // Context of the app under test.
+        Context appContext = InstrumentationRegistry.getTargetContext();
 
         CacheHelper c = new CacheHelper(appContext);
 
@@ -38,21 +45,21 @@ public class ExampleInstrumentedTest {
         Log.d("TEST 2", "Test that a an insert of the channel has the result of updating the time to the current time");
         c.cacheAddEntry("RTP");
         Thread.sleep(1000);
-        c.cacheAddEntry("SIC");
+        c.cacheAddEntry("TVI");
         String newrtpUpdateDate = DateHelper.getDateTimeString(c.getUpdateDate("RTP"));
-        String newsicUpdateDate = DateHelper.getDateTimeString(c.getUpdateDate("SIC"));
+        String newsicUpdateDate = DateHelper.getDateTimeString(c.getUpdateDate("TVI"));
         Log.d("TEST", "new RTP update date : "+ newrtpUpdateDate);
-        Log.d("TEST", "new SIC update date : "+ newsicUpdateDate);
+        Log.d("TEST", "new TVI update date : "+ newsicUpdateDate);
         assertNotEquals("new RTP date is different from before ", newrtpUpdateDate,  rtpUpdateDate);
-        assertNotEquals("new SIC date is different from before ", newsicUpdateDate,  sicUpdateDate);
+        assertNotEquals("new TVI date is different from before ", newsicUpdateDate,  sicUpdateDate);
 
 
         Log.d("TEST 3", "Test that a second update of the channel has the result of updating the time");
         Thread.sleep(1000);
-        c.cacheAddEntry("SIC");
-        String newnewsicUpdateDate = DateHelper.getDateTimeString(c.getUpdateDate("SIC"));
-        Log.d("TEST", "new new SIC update date : "+ newnewsicUpdateDate);
-        assertNotEquals("new SIC date is different from before ", newsicUpdateDate,  newnewsicUpdateDate);
+        c.cacheAddEntry("TVI");
+        String newnewsicUpdateDate = DateHelper.getDateTimeString(c.getUpdateDate("TVI"));
+        Log.d("TEST", "new new TVI update date : "+ newnewsicUpdateDate);
+        assertNotEquals("new TVI date is different from before ", newsicUpdateDate,  newnewsicUpdateDate);
 
 
         Log.d("TEST 4", "Json object");
@@ -60,6 +67,14 @@ public class ExampleInstrumentedTest {
         JSONObject hi = s.GetChannelByDateInterval("RTP1","2016-10-30","2016-11-04");
 
         if (hi != null ) Log.d("TEST", hi.toString());
+    }
+
+    @Test
+    public void Test02() throws Exception {
+        // Context of the app under test.
+        Context appContext = InstrumentationRegistry.getTargetContext();
+
+        SapoEPGHelper s = new SapoEPGHelper(appContext);
 
 
         Log.d("TEST 5", "Json object List");
@@ -72,8 +87,5 @@ public class ExampleInstrumentedTest {
 
         Log.d("TEST", "CHANNEL LIST: " + s.GetChannelArrayList().toString());
         Log.d("TEST", "SIC LIST: " + s.GetProgramArrayList("SIC").toString());
-
-
-
     }
 }

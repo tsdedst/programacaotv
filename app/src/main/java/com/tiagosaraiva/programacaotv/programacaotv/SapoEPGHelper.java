@@ -29,6 +29,7 @@ public class SapoEPGHelper {
 
     private CacheHelper mCache;
     private Context mContext;
+    private ProgramDbHelper mProgramCache;
 
     private final String BASEURL = "http://services.sapo.pt/EPG/";
     private final String CHANNELLISTNAME = "LIST";
@@ -46,40 +47,12 @@ public class SapoEPGHelper {
             ChannelName = name;
         }
     }
-    public class EpisodeEntry {
-        ProgramEntry Program;
-        String StartTime;
-        String EndTime;
-        String ProgramSeason;
-        String ProgramEpisode;
-        String Id;
 
-        public EpisodeEntry(ProgramEntry prog,
-                            String starttime,
-                            String endtime,
-                            String programseason,
-                            String programepisode,
-                            String id)
-        {
-            this.Program =  prog;
-            this.StartTime =  starttime;
-            this.EndTime =  endtime;
-            this.ProgramSeason =  programseason;
-            this.ProgramEpisode =  programepisode;
-            this.Id =  id;
-        }
-
-        @Override
-        public String toString() {
-            // return super.toString();
-            String ret = Program.toString() + ": Start time: " + StartTime + ", End Time: " + EndTime + ", Season: " + ProgramSeason + ", Episode: " +ProgramEpisode;
-            return ret;
-        }
-    }
 
     public SapoEPGHelper(Context context) {
         this.mContext = context;
         this.mCache = new CacheHelper(context);
+        this.mProgramCache = new ProgramDbHelper(context);
         this.ChannelMap = GetChannelArrayList();
     }
 
@@ -97,11 +70,11 @@ public class SapoEPGHelper {
         // Last update was before the time threshold for updating, OR forceUpdate is true
         if ((lastUpdateDate.getTime() - updateThresholdDate.getTime().getTime() < 0) || forceUpdate)
         {
-            Log.d("PROG", "Date of last update: " + DateHelper.getDateString(lastUpdateDate) +
+            Log.d("SAPOEPGHELPER", "Date of last update: " + DateHelper.getDateString(lastUpdateDate) +
                     ", Update threshold date: " +DateHelper.getDateString(updateThresholdDate.getTime()) +
                     " (" + updateChannelListAge + " days ago.)");
 
-            JSONObject newChannelList = downloadFromDaInterwebz(action);
+            JSONObject newChannelList = DownloadJSONAsync.downloadFromDaInterwebz(action);
             if (newChannelList != null) {
                 writeToFile(newChannelList.toString(), mContext, CHANNELLISTNAME);
                 mCache.cacheAddEntry(CHANNELLISTNAME);
@@ -112,7 +85,7 @@ public class SapoEPGHelper {
         }
         else
         {
-            Log.d("PROG", "No need to update Channel List");
+            Log.d("SAPOEPGHELPER", "No need to update Channel List");
             try {
                 JSONObject channelList = new JSONObject(readFromFile(mContext, CHANNELLISTNAME));
                 return channelList;
@@ -120,7 +93,7 @@ public class SapoEPGHelper {
             catch (JSONException ex)
             {
                 //todo: handle you shiiiiit
-                Log.e("PROG", "getChannelList Cannot read file, trying to update from web");
+                Log.e("SAPOEPGHELPER", "getChannelList Cannot read file, trying to update from web");
                 return GetChannelList(true);
             }
         }
@@ -161,7 +134,7 @@ public class SapoEPGHelper {
         action += "&";
         action += "endDate=" + endDate.split("\\s+")[0];
 
-        return downloadFromDaInterwebz(action);
+        return DownloadJSONAsync.downloadFromDaInterwebz(action);
     }
 
     public JSONObject GetProgramList(String channelInitials) {
@@ -181,7 +154,7 @@ public class SapoEPGHelper {
 
         // Last update was before the time threshold for updating, OR forceUpdate is true
         if ((lastUpdateDate.getTime() - updateThresholdDate.getTime().getTime() < 0) || forceUpdate) {
-            Log.d("PROG", "Channel: "+ channelInitials+
+            Log.d("SAPOEPGHELPER", "Channel: "+ channelInitials+
                     ", Date of last update: " + DateHelper.getDateString(lastUpdateDate) +
                     ", Update threshold date: " +DateHelper.getDateString(updateThresholdDate.getTime()) +
                     " (" + updateChannelListAge + " days ago.)");
@@ -193,7 +166,7 @@ public class SapoEPGHelper {
         }
         else
         {
-            Log.d("PROG", "No need to update EpisodeEntry List for: "+ channelInitials);
+            Log.d("SAPOEPGHELPER", "No need to update EpisodeEntry List for: "+ channelInitials);
             try {
                 JSONObject channelList = new JSONObject(readFromFile(mContext, channelInitials));
                 return channelList;
@@ -201,7 +174,7 @@ public class SapoEPGHelper {
             catch (JSONException ex)
             {
                 //todo: handle you shiiiiit
-                Log.e("PROG", "getProgramList Cannot read file, trying to update from web");
+                Log.e("SAPOEPGHELPER", "getProgramList Cannot read file, trying to update from web");
                 return GetProgramList(channelInitials, true);
             }
         }
@@ -222,7 +195,6 @@ public class SapoEPGHelper {
             JSONArray list = programs.getJSONArray("Program");
             for(int i = 0; i < list.length(); i++){
                 String sigla = GetJSONString(list.getJSONObject(i), "ChannelSigla");
-                //String channelname = GetJSONString(list.getJSONObject(i),"ChannelName");
                 String description = GetJSONString(list.getJSONObject(i),"Description");
                 String starttime = GetJSONString(list.getJSONObject(i),"StartTime");
                 String endtime= GetJSONString(list.getJSONObject(i),"EndTime");
@@ -239,13 +211,12 @@ public class SapoEPGHelper {
                     programseason = GetJSONString(seriesObject, "ValueOf");
                     programepisode = GetJSONString(episodeObject, "ValueOf");
                 } catch (JSONException ex) {
-                    Log.e("SAPOEPGHELPER", "Problem getting season or episode object");
+                    //todo: handle : Log.d("SAPOEPGHELPER", "Problem getting season or episode object");
                 }
 
-                ProgramEntry prog = new ProgramEntry(programname, sigla, description, shortdesc);
-                Log.d("PROGRAM", "Program: " + prog.toString());
-                EpisodeEntry ep = new EpisodeEntry(prog, starttime,endtime,programseason,programepisode,id);
-                Log.d("PROGRAM", "Episode: " +ep.toString());
+                mProgramCache.programAddEntry(new ProgramEntry(programname, sigla, description, shortdesc));
+                EpisodeEntry ep = new EpisodeEntry(programname, starttime,endtime,programseason,programepisode,id);
+                Log.d("SAPOEPGHELPER", "Episode: " +ep.toString());
                 ret.add(ep);
             }
             return ret;
@@ -264,25 +235,25 @@ public class SapoEPGHelper {
         }
         catch (JSONException ex)
         {
-            Log.e("EPGHELPER", "Get JSON String failed on object: " + obj.toString());
+            Log.e("SAPOEPGHELPER", "Get JSON String failed on object: " + obj.toString());
             return "";
         }
     }
     private void writeToFile(String data,Context context, String filename) {
         try {
-            Log.d("PROG", "Trying to write to file: "+ filename);
+            Log.d("SAPOEPGHELPER", "Trying to write to file: "+ filename);
             OutputStreamWriter outputStreamWriter = new OutputStreamWriter(context.openFileOutput(filename, Context.MODE_PRIVATE));
             outputStreamWriter.write(data);
             outputStreamWriter.close();
         }
         catch (IOException e) {
-            Log.e("PROG", "File write failed: " + e.toString());
+            Log.e("SAPOEPGHELPER", "File write failed: " + e.toString());
         }
     }
     private String readFromFile(Context context, String filename) {
 
         String ret = "";
-        Log.d("PROG", "Trying to read from file: "+ filename);
+        Log.d("SAPOEPGHELPER", "Trying to read from file: "+ filename);
 
         try {
             InputStream inputStream = context.openFileInput(filename);
@@ -302,50 +273,12 @@ public class SapoEPGHelper {
             }
         }
         catch (FileNotFoundException e) {
-            Log.e("PROG", "File not found: " + e.toString());
+            Log.e("SAPOEPGHELPER", "File not found: " + e.toString());
         } catch (IOException e) {
-            Log.e("PROG", "Can not read file: " + e.toString());
+            Log.e("SAPOEPGHELPER", "Can not read file: " + e.toString());
         }
 
         return ret;
     }
-    private JSONObject downloadFromDaInterwebz(String url) {
-        try {
-            URL urlAction = new URL(url);
-            Log.d("EPGHELPER", "downloadFromDaInterwebz: string: " + url);
-            DownloadJSONAsync j = new DownloadJSONAsync();
 
-            j.execute(urlAction);
-            try{
-                String result = j.get();
-
-                try
-                {
-                    JSONObject ret = new JSONObject(result);
-                    return ret;
-                } catch (JSONException ex)
-                {
-                    //todo: handle you shiiiiit
-                    Log.e("EPGHELPER", "GetChannelByDateInterval JSON Exception, result from url: '" + url + "' is: '" + result + "'");
-                    return null;
-                }
-            } catch(InterruptedException ex)
-            {
-                //todo: handle you shiiiiit
-                Log.e("EPGHELPER", "GetChannelByDateInterval MalformedURLException");
-                return null;
-            } catch (ExecutionException ex)
-            {
-                //todo: handle you shiiiiit
-                Log.e("EPGHELPER", "GetChannelByDateInterval ExecutionException");
-                return null;
-            }
-        }
-        catch (MalformedURLException ex)
-        {
-            //todo: handle you shiiiiit
-            Log.e("EPGHELPER", "GetChannelByDateInterval MalformedURLException");
-            return null;
-        }
-    }
 }
