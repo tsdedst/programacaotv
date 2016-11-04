@@ -74,7 +74,7 @@ public class SapoEPGHelper {
                     ", Update threshold date: " +DateHelper.getDateString(updateThresholdDate.getTime()) +
                     " (" + updateChannelListAge + " days ago.)");
 
-            JSONObject newChannelList = DownloadJSONAsync.downloadFromDaInterwebz(action);
+            JSONObject newChannelList = DownloadJSONAsync.downloadFromURL(action);
             if (newChannelList != null) {
                 writeToFile(newChannelList.toString(), mContext, CHANNELLISTNAME);
                 mCache.cacheAddEntry(CHANNELLISTNAME);
@@ -116,8 +116,7 @@ public class SapoEPGHelper {
             return ret;
 
         } catch (JSONException ex) {
-            //todo: handle you shiiiiit
-            Log.e("SAPOEPGHELPER", "getChannelListStringArray Cannot get JSON object" );
+            Log.e("SAPOEPGHELPER", "GetChannelArrayList Cannot get JSON object" );
             return null;
         }
     }
@@ -134,7 +133,7 @@ public class SapoEPGHelper {
         action += "&";
         action += "endDate=" + endDate.split("\\s+")[0];
 
-        return DownloadJSONAsync.downloadFromDaInterwebz(action);
+        return DownloadJSONAsync.downloadFromURL(action);
     }
 
     public JSONObject GetProgramList(String channelInitials) {
@@ -159,10 +158,10 @@ public class SapoEPGHelper {
                     ", Update threshold date: " +DateHelper.getDateString(updateThresholdDate.getTime()) +
                     " (" + updateChannelListAge + " days ago.)");
 
-            JSONObject newChannelList = GetChannelByDateInterval(channelInitials, updateStart.getTime(), updateEnd.getTime());
-            writeToFile(newChannelList.toString(), mContext, channelInitials);
+            JSONObject newProgramList = GetChannelByDateInterval(channelInitials, updateStart.getTime(), updateEnd.getTime());
+            writeToFile(newProgramList.toString(), mContext, channelInitials);
             mCache.cacheAddEntry(channelInitials);
-            return newChannelList;
+            return newProgramList;
         }
         else
         {
@@ -173,7 +172,6 @@ public class SapoEPGHelper {
             }
             catch (JSONException ex)
             {
-                //todo: handle you shiiiiit
                 Log.e("SAPOEPGHELPER", "getProgramList Cannot read file, trying to update from web");
                 return GetProgramList(channelInitials, true);
             }

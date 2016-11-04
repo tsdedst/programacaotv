@@ -5,4 +5,8 @@
     <string name="navigation_drawer_close">Close navigation drawer</string>
 
     <string name="action_settings">Settings</string>
+    <string name="tvdb_api_key">F1F13B826C94A071</string>
+    <string name="tmdb_api_key">1f9b44f4e58cb7f7172f6ca50e7b3bdc</string>
+    <string name="token_sharedperfs_file">com.anxiouscode.programacaotv.token.apis.db</string>
+
 </resources>

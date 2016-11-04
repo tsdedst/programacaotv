@@ -13,7 +13,7 @@ import android.util.Log;
  */
 
 public class ProgramDbHelper extends SQLiteOpenHelper {
-    private static final int DATABASE_VERSION = 4;
+    private static final int DATABASE_VERSION = 5;
     private static final String DATABASE_NAME = "programinfo";
     private static final String TEXT_TYPE = " TEXT";
     private static final String COMMA_SEP = ",";
@@ -46,7 +46,12 @@ public class ProgramDbHelper extends SQLiteOpenHelper {
                     ProgramEntry.COLUMN_NAME_IMDB_POSTER + TEXT_TYPE + COMMA_SEP +
                     ProgramEntry.COLUMN_NAME_IMDB_IMAGE_FILE + TEXT_TYPE  + COMMA_SEP +
                     ProgramEntry.COLUMN_NAME_TRAKT_IMAGE_FILE + TEXT_TYPE  + COMMA_SEP +
-                    ProgramEntry.COLUMN_NAME_TRAKT_URL + TEXT_TYPE  +
+                    ProgramEntry.COLUMN_NAME_TRAKT_URL + TEXT_TYPE  + COMMA_SEP +
+                    ProgramEntry.COLUMN_NAME_TMDB_BACKDROP_PATH + TEXT_TYPE + COMMA_SEP +
+                    ProgramEntry.COLUMN_NAME_TMDB_OVERVIEW + TEXT_TYPE + COMMA_SEP +
+                    ProgramEntry.COLUMN_NAME_TMDB_POSTER_PATH + TEXT_TYPE + COMMA_SEP +
+                    ProgramEntry.COLUMN_NAME_TMDB_POPULARITY + TEXT_TYPE + COMMA_SEP +
+                    ProgramEntry.COLUMN_NAME_TVDB_BANNER + TEXT_TYPE +
                     " )";
 
     static final String SQL_DELETE_ENTRIES =
@@ -107,6 +112,11 @@ public class ProgramDbHelper extends SQLiteOpenHelper {
             values.put(ProgramEntry.COLUMN_NAME_IMDB_IMAGE_FILE, program.IMDBImageFile);
             values.put(ProgramEntry.COLUMN_NAME_TRAKT_IMAGE_FILE, program.TraktImageFile);
             values.put(ProgramEntry.COLUMN_NAME_TRAKT_URL, program.TraktUrl);
+            values.put(ProgramEntry.COLUMN_NAME_TMDB_BACKDROP_PATH, program.TMDBBackdropPath);
+            values.put(ProgramEntry.COLUMN_NAME_TMDB_OVERVIEW, program.TMDBOverview);
+            values.put(ProgramEntry.COLUMN_NAME_TMDB_POSTER_PATH, program.TMDBPosterPath);
+            values.put(ProgramEntry.COLUMN_NAME_TMDB_POPULARITY, program.TMDBPopularity);
+            values.put(ProgramEntry.COLUMN_NAME_TVDB_BANNER, program.TVDBBanner);
             // insert value
             writableCacheDatabase.replace(TABLE_NAME, null, values);
             writableCacheDatabase.close();
@@ -155,7 +165,12 @@ public class ProgramDbHelper extends SQLiteOpenHelper {
                 ProgramEntry.COLUMN_NAME_IMDB_POSTER,
                 ProgramEntry.COLUMN_NAME_IMDB_IMAGE_FILE,
                 ProgramEntry.COLUMN_NAME_TRAKT_IMAGE_FILE,
-                ProgramEntry.COLUMN_NAME_TRAKT_URL
+                ProgramEntry.COLUMN_NAME_TRAKT_URL,
+                ProgramEntry.COLUMN_NAME_TMDB_BACKDROP_PATH,
+                ProgramEntry.COLUMN_NAME_TMDB_OVERVIEW,
+                ProgramEntry.COLUMN_NAME_TMDB_POSTER_PATH,
+                ProgramEntry.COLUMN_NAME_TMDB_POPULARITY,
+                ProgramEntry.COLUMN_NAME_TVDB_BANNER
         };
         Cursor c = readableCacheDatabase.query(
                 TABLE_NAME,        // The table to query
@@ -192,7 +207,12 @@ public class ProgramDbHelper extends SQLiteOpenHelper {
                                                 c.getString(20),
                                                 c.getString(21),
                                                 c.getString(22),
-                                                c.getString(23));
+                                                c.getString(23),
+                                                c.getString(24),
+                                                c.getString(25),
+                                                c.getString(26),
+                                                c.getString(27),
+                                                c.getString(28));
             Log.d("PROGRAMDBHELPER", "getProgram: title: " + ret.ProgramName + ", channel: " + ret.ChannelInitials);
             return ret;
 

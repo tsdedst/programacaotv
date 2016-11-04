@@ -87,5 +87,37 @@ public class ExampleInstrumentedTest {
 
         Log.d("TEST", "CHANNEL LIST: " + s.GetChannelArrayList().toString());
         Log.d("TEST", "SIC LIST: " + s.GetProgramArrayList("SIC").toString());
+
+
+    }
+
+    @Test
+    public void Test03() throws Exception {
+        // Context of the app under test.
+        Context appContext = InstrumentationRegistry.getTargetContext();
+
+        Log.d("TEST 7", "TVDB login");
+
+        SapoEPGHelper s = new SapoEPGHelper(appContext);
+        Log.d("TEST 7", "A vida é injusta");
+        ProgramEntry pe1 = new ProgramEntry("A vida é injusta", "SIC", "empty meo desc", "Empty short desc" );
+
+        Log.d("TEST", "Program Name: " +pe1.ProgramName+", IMDB rating: " + pe1.IMDBImdbrating);
+
+        Log.d("TEST 7", "Stranger Things");
+        ProgramEntry pe2 = new ProgramEntry("Stranger Things", "SIC", "empty meo desc", "Empty short desc" );
+        Log.d("TEST", "Program Name: " +pe2.ProgramName+", IMDB rating: " + pe2.IMDBImdbrating);
+
+        Log.d("TEST 7", "A Ressaca");
+        ProgramEntry pe3 = new ProgramEntry("A Ressaca", "SIC", "empty meo desc", "Empty short desc" );
+        Log.d("TEST", "Program Name: " +pe3.ProgramName+", IMDB rating: " + pe3.IMDBImdbrating);
+
+        Log.d("TEST 7", "Foi assim que aconteceu");
+        ProgramEntry pe4 = new ProgramEntry("Foi assim que aconteceu", "SIC", "empty meo desc", "Empty short desc" );
+        Log.d("TEST", "Program Name: " +pe4.ProgramName+", IMDB rating: " + pe4.IMDBImdbrating);
+
+
+
+
     }
 }
