@@ -77,16 +77,19 @@ public class ExampleInstrumentedTest {
         SapoEPGHelper s = new SapoEPGHelper(appContext);
 
 
-        Log.d("TEST 5", "Json object List");
-        Log.d("TEST", "Channel List: " + s.GetChannelList().toString());
-
-        Log.d("TEST 6", "Json object PROGRAM LIST");
-        Log.d("TEST", "PROGRAM List for SIC: " + s.GetProgramList("SIC").toString());
-
-
-
-        Log.d("TEST", "CHANNEL LIST: " + s.GetChannelArrayList().toString());
-        Log.d("TEST", "SIC LIST: " + s.GetProgramArrayList("SIC").toString());
+//        Log.d("TEST 5", "Json object List");
+//        Log.d("TEST", "Channel List: " + s.GetChannelList().toString());
+//
+//        Log.d("TEST 6", "Json object PROGRAM LIST");
+//        Log.d("TEST", "PROGRAM List for SIC: " + s.GetProgramList("SIC").toString());
+//
+//
+//
+//        Log.d("TEST", "CHANNEL LIST: " + s.GetChannelArrayList().toString());
+        s.InitializeCaches("SIC");
+        Log.d("TEST", "JORNAL DA NOITE: " + s.GetEpisodeCache().getEpisodesOfProgram("Jornal da Noite"));
+        Log.d("TEST", "");
+        Log.d("TEST", "SIC LIST: " + s.GetEpisodeCache().getEpisodesOfChannel("SIC"));
 
 
     }
@@ -100,23 +103,31 @@ public class ExampleInstrumentedTest {
 
         SapoEPGHelper s = new SapoEPGHelper(appContext);
         Log.d("TEST 7", "A vida é injusta");
-        ProgramEntry pe1 = new ProgramEntry("A vida é injusta", "SIC", "empty meo desc", "Empty short desc" );
-
-        Log.d("TEST", "Program Name: " +pe1.ProgramName+", IMDB rating: " + pe1.IMDBImdbrating);
+        s.GetProgramCache().programAddEntry("A vida é injusta", "empty meo desc", "Empty short desc" );
 
         Log.d("TEST 7", "Stranger Things");
-        ProgramEntry pe2 = new ProgramEntry("Stranger Things", "SIC", "empty meo desc", "Empty short desc" );
-        Log.d("TEST", "Program Name: " +pe2.ProgramName+", IMDB rating: " + pe2.IMDBImdbrating);
+        s.GetProgramCache().programAddEntry("Stranger Things", "empty meo desc", "Empty short desc");
 
         Log.d("TEST 7", "A Ressaca");
-        ProgramEntry pe3 = new ProgramEntry("A Ressaca", "SIC", "empty meo desc", "Empty short desc" );
-        Log.d("TEST", "Program Name: " +pe3.ProgramName+", IMDB rating: " + pe3.IMDBImdbrating);
+        s.GetProgramCache().programAddEntry("A Ressaca", "empty meo desc", "Empty short desc");
+        s.GetProgramCache().GetProgram("A Ressaca").DownloadTMDBInfo();
+        s.GetProgramCache().GetProgram("A Ressaca").DownloadIMDBInfo();
+        s.GetProgramCache().GetProgram("A Ressaca").DownloadIMDBImages();
+        s.GetProgramCache().GetProgram("A Ressaca").DownloadTMDBImages();
+
 
         Log.d("TEST 7", "Foi assim que aconteceu");
-        ProgramEntry pe4 = new ProgramEntry("Foi assim que aconteceu", "SIC", "empty meo desc", "Empty short desc" );
+        s.GetProgramCache().programAddEntry("Foi assim que aconteceu", "empty meo desc", "Empty short desc" );
+
+        ProgramEntry pe1 = s.GetProgramCache().GetProgram("A Vida é injusta");
+        ProgramEntry pe2 = s.GetProgramCache().GetProgram("Stranger Things");
+        ProgramEntry pe3 = s.GetProgramCache().GetProgram("A Ressaca");
+        ProgramEntry pe4 = s.GetProgramCache().GetProgram("Foi Assim que aconteceu");
+
+        Log.d("TEST", "Program Name: " +pe1.ProgramName+", IMDB rating: " + pe1.IMDBImdbrating);
+        Log.d("TEST", "Program Name: " +pe2.ProgramName+", IMDB rating: " + pe2.IMDBImdbrating);
+        Log.d("TEST", "Program Name: " +pe3.ProgramName+", IMDB rating: " + pe3.IMDBImdbrating);
         Log.d("TEST", "Program Name: " +pe4.ProgramName+", IMDB rating: " + pe4.IMDBImdbrating);
-
-
 
 
     }

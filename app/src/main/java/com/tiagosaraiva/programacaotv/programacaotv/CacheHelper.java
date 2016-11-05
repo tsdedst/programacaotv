@@ -130,9 +130,7 @@ public class CacheHelper extends SQLiteOpenHelper {
             try {
                 date = c.getString(1);
             } catch (CursorIndexOutOfBoundsException ex) {
-
-                Log.e("CACHEHELPER", "Hello... is it me you're looking for?");
-                //todo: handle your shit
+                Log.d("CACHEHELPER", "No Channel List present (first run?)");
             }
             Log.d("CACHEHELPER", "getUpdateDate: channel: " + channel + ", date: " + date);
         }

@@ -8,18 +8,24 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.util.Log;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * Created by tfsar on 28/10/2016.
  */
 
-public class ProgramDbHelper extends SQLiteOpenHelper {
+
+public class ProgramDbHelper extends SQLiteOpenHelper implements InfoCompleteListener {
+
     private static final int DATABASE_VERSION = 5;
     private static final String DATABASE_NAME = "programinfo";
     private static final String TEXT_TYPE = " TEXT";
     private static final String COMMA_SEP = ",";
     private static final String TABLE_NAME = "programinfo";
     /* Inner class that defines the table contents */
-
+    private List<String> AddedShows;
+    private List<String> AddingShows;
 
     static final String SQL_CREATE_TABLE =
             "CREATE TABLE " + TABLE_NAME + " (" +
@@ -57,12 +63,52 @@ public class ProgramDbHelper extends SQLiteOpenHelper {
     static final String SQL_DELETE_ENTRIES =
             "DROP TABLE IF EXISTS " + TABLE_NAME;
 
+
+    private synchronized boolean isShowBeingAdded(String name)
+    {
+        boolean ret = AddingShows.contains(name.toLowerCase());
+//        String response = ret?"yes": "nope";
+//        Log.d("DBHELPER", "is show '"+name.toLowerCase()+"' being added? " + response);
+        return ret;
+    }
+    private synchronized void showWasAdded(String name)
+    {
+        if (isShowBeingAdded(name.toLowerCase()))
+        {
+//            Log.d("DBHELPER", "AddingShows list before removing '"+name.toLowerCase()+"' : " + AddingShows.toString());
+            int index =  AddingShows.indexOf(name.toLowerCase());
+//            Log.d("DBHELPER", "show '"+name.toLowerCase()+"' is in position: " + String.valueOf(index));
+            AddingShows.remove(index);
+            //Log.d("DBHELPER", "AddingShows list after removing '"+name.toLowerCase()+"' : " + AddingShows.toString());
+        }
+//        else
+//            Log.d("DBHELPER", "showWasAdded: show '"+name.toLowerCase()+"' is already not being added. did something go wrong?");
+        this.notifyAll();
+    }
+    private synchronized void showIsBeingAdded(String name)
+    {
+        if (!isShowBeingAdded(name.toLowerCase()))
+        {
+//            Log.d("DBHELPER", "AddingShows list before adding '"+name.toLowerCase()+"' : " + AddingShows.toString());
+            AddingShows.add(name.toLowerCase());
+//            Log.d("DBHELPER", "AddingShows list after adding '"+name.toLowerCase()+"' : " + AddingShows.toString());
+        }
+//        else
+//            Log.d("DBHELPER", " showIsBeingAdded: show '"+name.toLowerCase()+"' is already being added. did something go wrong?");
+        this.notifyAll();
+    }
+
     ProgramDbHelper(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
+        AddedShows = new ArrayList<>();
+        AddingShows = new ArrayList<>();
+
     }
 
     @Override
     public void onCreate(SQLiteDatabase db) {
+        //db.enableWriteAheadLogging();
+
         db.execSQL(SQL_CREATE_TABLE);
     }
 
@@ -79,52 +125,65 @@ public class ProgramDbHelper extends SQLiteOpenHelper {
         onUpgrade(db, oldVersion, newVersion);
     }
 
-    public void programAddEntry(ProgramEntry program)
+    public void programAddEntry(final String name, final String shortdesc, final String meodesc)
     {
-        if (!isInDb(program.ProgramName)) {
-            SQLiteDatabase writableCacheDatabase = this.getWritableDatabase();
-
-            Log.d("PROGRAMDBHELPER", "programAddEntry: Add cache entry, channel: " + program.ChannelInitials + ", program: " + program.ProgramName + ", desc: " + program.ShortMeoDesc);
-
-            // Create a new map of values, where column names are the keys
-            ContentValues values = new ContentValues();
-            values.put(ProgramEntry.COLUMN_NAME_PROGRAM, program.ProgramName);
-            values.put(ProgramEntry.COLUMN_NAME_CHANNEL, program.ChannelInitials);
-            values.put(ProgramEntry.COLUMN_NAME_MEO_DESCRIPTION, program.MeoDesc);
-            values.put(ProgramEntry.COLUMN_NAME_SHORT_DESCRIPTION, program.ShortMeoDesc);
-            values.put(ProgramEntry.COLUMN_NAME_IMDB_INFOCOMPLETE, program.IMDBInfoComplete);
-            values.put(ProgramEntry.COLUMN_NAME_IMDB_TITLE, program.IMDBTitle);
-            values.put(ProgramEntry.COLUMN_NAME_IMDB_YEAR, program.IMDBYear);
-            values.put(ProgramEntry.COLUMN_NAME_IMDB_RATE, program.IMDBRate);
-            values.put(ProgramEntry.COLUMN_NAME_IMDB_RELEASED, program.IMDBReleased);
-            values.put(ProgramEntry.COLUMN_NAME_IMDB_RUNTIME, program.IMDBRuntime);
-            values.put(ProgramEntry.COLUMN_NAME_IMDB_PLOT, program.IMDBPlot);
-            values.put(ProgramEntry.COLUMN_NAME_IMDB_DIRECTOR, program.IMDBDirector);
-            values.put(ProgramEntry.COLUMN_NAME_IMDB_GENRE, program.IMDBGenre);
-            values.put(ProgramEntry.COLUMN_NAME_IMDB_ACTORS, program.IMDBActors);
-            values.put(ProgramEntry.COLUMN_NAME_IMDB_IMDBRATING, program.IMDBImdbrating);
-            values.put(ProgramEntry.COLUMN_NAME_IMDB_IMDBID, program.IMDBImdbId);
-            values.put(ProgramEntry.COLUMN_NAME_IMDB_TYPE, program.IMDBType);
-            values.put(ProgramEntry.COLUMN_NAME_IMDB_LANGUAGE, program.IMDBLanguage);
-            values.put(ProgramEntry.COLUMN_NAME_IMDB_COUNTRY, program.IMDBCountry);
-            values.put(ProgramEntry.COLUMN_NAME_IMDB_AWARDS, program.IMDBAwards);
-            values.put(ProgramEntry.COLUMN_NAME_IMDB_POSTER, program.IMDBPoster);
-            values.put(ProgramEntry.COLUMN_NAME_IMDB_IMAGE_FILE, program.IMDBImageFile);
-            values.put(ProgramEntry.COLUMN_NAME_TRAKT_IMAGE_FILE, program.TraktImageFile);
-            values.put(ProgramEntry.COLUMN_NAME_TRAKT_URL, program.TraktUrl);
-            values.put(ProgramEntry.COLUMN_NAME_TMDB_BACKDROP_PATH, program.TMDBBackdropPath);
-            values.put(ProgramEntry.COLUMN_NAME_TMDB_OVERVIEW, program.TMDBOverview);
-            values.put(ProgramEntry.COLUMN_NAME_TMDB_POSTER_PATH, program.TMDBPosterPath);
-            values.put(ProgramEntry.COLUMN_NAME_TMDB_POPULARITY, program.TMDBPopularity);
-            values.put(ProgramEntry.COLUMN_NAME_TVDB_BANNER, program.TVDBBanner);
-            // insert value
-            writableCacheDatabase.replace(TABLE_NAME, null, values);
-            writableCacheDatabase.close();
+        String programname = (new MeoName(name)).Title;
+        // get imdb, don't get tmdb
+        programAddEntry(programname, shortdesc, meodesc, false, true, false, false, false);
+    }
+    public void programAddEntry(final String name, final String shortdesc, final String meodesc, final boolean force, final boolean getImdb, final boolean getTmdb, final boolean getImdbImages, final boolean getTmdbImages) {
+        String programname = (new MeoName(name)).Title;
+        if (!isInDb(programname) || (force && !isShowBeingAdded(programname)))
+        {
+            showIsBeingAdded(programname);
+            ProgramEntry p = new ProgramEntry(this, programname, shortdesc, meodesc, getImdb, getTmdb, getImdbImages, getTmdbImages);
         }
     }
 
-    public void resetDB()
-    {
+
+    public void programAddtoDB(ProgramEntry program) {
+        Log.d("PROGRAMDBHELPER", "programAddtoDB: Add cache entry, channel: " + program.ChannelInitials + ", program: " + program.ProgramName + ", desc: " + program.ShortMeoDesc);
+
+        // Create a new map of values, where column names are the keys
+        ContentValues values = new ContentValues();
+        values.put(ProgramEntry.COLUMN_NAME_PROGRAM, program.ProgramName);
+        values.put(ProgramEntry.COLUMN_NAME_CHANNEL, program.ChannelInitials);
+        values.put(ProgramEntry.COLUMN_NAME_MEO_DESCRIPTION, program.MeoDesc);
+        values.put(ProgramEntry.COLUMN_NAME_SHORT_DESCRIPTION, program.ShortMeoDesc);
+        values.put(ProgramEntry.COLUMN_NAME_IMDB_INFOCOMPLETE, program.IMDBInfoComplete);
+        values.put(ProgramEntry.COLUMN_NAME_IMDB_TITLE, program.IMDBTitle);
+        values.put(ProgramEntry.COLUMN_NAME_IMDB_YEAR, program.IMDBYear);
+        values.put(ProgramEntry.COLUMN_NAME_IMDB_RATE, program.IMDBRate);
+        values.put(ProgramEntry.COLUMN_NAME_IMDB_RELEASED, program.IMDBReleased);
+        values.put(ProgramEntry.COLUMN_NAME_IMDB_RUNTIME, program.IMDBRuntime);
+        values.put(ProgramEntry.COLUMN_NAME_IMDB_PLOT, program.IMDBPlot);
+        values.put(ProgramEntry.COLUMN_NAME_IMDB_DIRECTOR, program.IMDBDirector);
+        values.put(ProgramEntry.COLUMN_NAME_IMDB_GENRE, program.IMDBGenre);
+        values.put(ProgramEntry.COLUMN_NAME_IMDB_ACTORS, program.IMDBActors);
+        values.put(ProgramEntry.COLUMN_NAME_IMDB_IMDBRATING, program.IMDBImdbrating);
+        values.put(ProgramEntry.COLUMN_NAME_IMDB_IMDBID, program.IMDBImdbId);
+        values.put(ProgramEntry.COLUMN_NAME_IMDB_TYPE, program.IMDBType);
+        values.put(ProgramEntry.COLUMN_NAME_IMDB_LANGUAGE, program.IMDBLanguage);
+        values.put(ProgramEntry.COLUMN_NAME_IMDB_COUNTRY, program.IMDBCountry);
+        values.put(ProgramEntry.COLUMN_NAME_IMDB_AWARDS, program.IMDBAwards);
+        values.put(ProgramEntry.COLUMN_NAME_IMDB_POSTER, program.IMDBPoster);
+        values.put(ProgramEntry.COLUMN_NAME_IMDB_IMAGE_FILE, program.IMDBImageFile);
+        values.put(ProgramEntry.COLUMN_NAME_TRAKT_IMAGE_FILE, program.TMDBPosterFile);
+        values.put(ProgramEntry.COLUMN_NAME_TRAKT_URL, program.TMDBBackdropFile);
+        values.put(ProgramEntry.COLUMN_NAME_TMDB_BACKDROP_PATH, program.TMDBBackdropURL);
+        values.put(ProgramEntry.COLUMN_NAME_TMDB_OVERVIEW, program.TMDBOverview);
+        values.put(ProgramEntry.COLUMN_NAME_TMDB_POSTER_PATH, program.TMDBPosterURL);
+        values.put(ProgramEntry.COLUMN_NAME_TMDB_POPULARITY, program.TMDBPopularity);
+        values.put(ProgramEntry.COLUMN_NAME_TVDB_BANNER, program.TVDBBanner);
+        // insert value
+        SQLiteDatabase writableCacheDatabase = this.getWritableDatabase();
+        writableCacheDatabase.replace(TABLE_NAME, null, values);
+        writableCacheDatabase.close();
+
+
+    }
+
+    public void resetDB() {
         Log.d("PROGRAMDBHELPER", "resetCache");
         SQLiteDatabase writableCacheDatabase = this.getWritableDatabase();
         // delete all entries
@@ -133,14 +192,24 @@ public class ProgramDbHelper extends SQLiteOpenHelper {
         writableCacheDatabase.execSQL(ProgramDbHelper.SQL_CREATE_TABLE);
     }
 
-    public ProgramEntry getProgram(String programName) {
+    public synchronized ProgramEntry GetProgram(String name) {
+        MeoName meoname = new MeoName(name);
+        String programname = meoname.Title;
+        while (isShowBeingAdded(programname))
+        {
+            try {
+                this.wait();
+
+            } catch (InterruptedException ignore) {
+                // log.debug("interrupted: " + ignore.getMessage());
+            }
+        }
+
         SQLiteDatabase readableCacheDatabase;
 
-        readableCacheDatabase = this.getReadableDatabase();
-
-        String selection = ProgramEntry.COLUMN_NAME_PROGRAM + " = ?";
+        String selection = ProgramEntry.COLUMN_NAME_PROGRAM + " = ? COLLATE NOCASE OR " + ProgramEntry.COLUMN_NAME_IMDB_TITLE + "= ? COLLATE NOCASE ";
         String sortOrder = null;
-        String[] selectionArgs = { programName };
+        String[] selectionArgs = { programname , programname };
         String[] projection = {
                 ProgramEntry.COLUMN_NAME_PROGRAM,
                 ProgramEntry.COLUMN_NAME_CHANNEL,
@@ -172,6 +241,9 @@ public class ProgramDbHelper extends SQLiteOpenHelper {
                 ProgramEntry.COLUMN_NAME_TMDB_POPULARITY,
                 ProgramEntry.COLUMN_NAME_TVDB_BANNER
         };
+
+        //while (this.getReadableDatabase().isOpen());
+        readableCacheDatabase = this.getReadableDatabase();
         Cursor c = readableCacheDatabase.query(
                 TABLE_NAME,        // The table to query
                 projection,                               // The columns to return
@@ -183,56 +255,55 @@ public class ProgramDbHelper extends SQLiteOpenHelper {
         );
 
         if (c != null) {
-            c.moveToFirst();
-            ProgramEntry ret = new ProgramEntry(c.getString(0),
-                                                c.getString(1),
-                                                c.getString(2),
-                                                c.getString(3),
-                                                c.getString(4),
-                                                c.getString(5),
-                                                c.getString(6),
-                                                c.getString(7),
-                                                c.getString(8),
-                                                c.getString(9),
-                                                c.getString(10),
-                                                c.getString(11),
-                                                c.getString(12),
-                                                c.getString(13),
-                                                c.getString(14),
-                                                c.getString(15),
-                                                c.getString(16),
-                                                c.getString(17),
-                                                c.getString(18),
-                                                c.getString(19),
-                                                c.getString(20),
-                                                c.getString(21),
-                                                c.getString(22),
-                                                c.getString(23),
-                                                c.getString(24),
-                                                c.getString(25),
-                                                c.getString(26),
-                                                c.getString(27),
-                                                c.getString(28));
-            Log.d("PROGRAMDBHELPER", "getProgram: title: " + ret.ProgramName + ", channel: " + ret.ChannelInitials);
+            ProgramEntry ret = null;
+            try {
+                c.moveToFirst();
+
+                ret = new ProgramEntry(this,
+                        c.getString(0),  c.getString(1),  c.getString(2),  c.getString(3),
+                        c.getString(4),  c.getString(5),  c.getString(6),  c.getString(7),  c.getString(8),
+                        c.getString(9),  c.getString(10), c.getString(11), c.getString(12), c.getString(13),
+                        c.getString(14), c.getString(15), c.getString(16), c.getString(17), c.getString(18),
+                        c.getString(19), c.getString(20), c.getString(21), c.getString(22), c.getString(23),
+                        c.getString(24), c.getString(25), c.getString(26), c.getString(27), c.getString(28));
+
+                Log.d("PROGRAMDBHELPER", "getProgram: title: " + ret.ProgramName + ", channel: " + ret.ChannelInitials);
+            } catch (CursorIndexOutOfBoundsException ex) {
+                Log.e("PROGRAMDBHELPER", "getProgram failed to get program '" + programname + "', maybe it's not in the database yet");
+            }
+            if (!c.isClosed()) c.close();
             return ret;
 
         }
+        if (c != null && !c.isClosed()) c.close();
         return null;
     }
 
+    public synchronized boolean isInDb(String name) {
+        MeoName meoname = new MeoName(name);
+        String programname = meoname.Title;
+        while (isShowBeingAdded(programname))
+        {
+            try {
+                this.wait();
 
-    public boolean isInDb(String programname) {
+            } catch (InterruptedException ignore) {
+                // log.debug("interrupted: " + ignore.getMessage());
+            }
+        }
+
         SQLiteDatabase readableCacheDatabase;
 
-        readableCacheDatabase = this.getReadableDatabase();
-
-        String selection = ProgramEntry.COLUMN_NAME_PROGRAM + " = ?";
+        String selection = ProgramEntry.COLUMN_NAME_PROGRAM + " = ? COLLATE NOCASE OR " + ProgramEntry.COLUMN_NAME_IMDB_TITLE + "= ? COLLATE NOCASE ";
         String sortOrder = null;
-        String[] selectionArgs = { programname};
+        String[] selectionArgs = { programname , programname };
         String[] projection = {
                 ProgramEntry.COLUMN_NAME_PROGRAM,
                 ProgramEntry.COLUMN_NAME_IMDB_INFOCOMPLETE
         };
+
+        //while (this.getReadableDatabase().isOpen());
+        readableCacheDatabase = this.getReadableDatabase();
         Cursor c = readableCacheDatabase.query(
                 TABLE_NAME,        // The table to query
                 projection,                               // The columns to return
@@ -244,35 +315,96 @@ public class ProgramDbHelper extends SQLiteOpenHelper {
         );
 
         if (c != null) {
-            c.moveToFirst();
-            String infocomplete = "";
-            String title = "";
             try {
-                title = c.getString(0);
-            } catch (CursorIndexOutOfBoundsException ex) {
-                Log.e("PROGRAMDBHELPER", "error in reading IMDB information from DB (title)");
-            }
-            if (title.compareTo(programname) == 0) {
-                Log.d("PROGRAMDBHELPER", "program is in database");
-
+                c.moveToFirst();
+                String infocomplete = "";
+                String title = "";
                 try {
-                    infocomplete = c.getString(1);
+                    title = c.getString(0);
                 } catch (CursorIndexOutOfBoundsException ex) {
-                    Log.e("PROGRAMDBHELPER", "error in reading IMDB information from DB (info complete)");
-                }
-                if (infocomplete.compareTo("Info") == 0) {
-                    Log.d("PROGRAMDBHELPER", "imdb info is present");
-                    return true;
-                } else if ((infocomplete.compareTo("NoInfo") == 0) || infocomplete.compareTo("InfoInvalid") ==0 ) {
-                    Log.d("PROGRAMDBHELPER", "imdb info is not available");
-                    return true;
-                } else {
-                    Log.d("PROGRAMDBHELPER", "program is in database but invalid");
+                    Log.d("PROGRAMDBHELPER", "error in reading Title from DB for: '" + programname + "', maybe it's not in the Database.");
+                    if (!c.isClosed()) c.close();
                     return false;
                 }
+                if (title != null && title.compareTo(programname) == 0) {
+                    Log.d("PROGRAMDBHELPER", "program '" + programname + "' is in database");
+                    return true;
+
+
+//                    try {
+//                        infocomplete = c.getString(1);
+//                    } catch (CursorIndexOutOfBoundsException ex) {
+//                        Log.e("PROGRAMDBHELPER", "error in reading IMDB information from DB (info complete)");
+//                    }
+//
+//                    if (!c.isClosed()) c.close();
+//
+//
+//                    if (infocomplete != null && infocomplete.compareTo("Info") == 0) {
+//                        Log.d("PROGRAMDBHELPER", "imdb info is present");
+//                        return true;
+//                    } else if (infocomplete != null && ((infocomplete.compareTo("NoInfo") == 0) || infocomplete.compareTo("InfoInvalid") == 0)) {
+//                        Log.d("PROGRAMDBHELPER", "imdb info is not available");
+//                        return true;
+//                    } else {
+//                        Log.d("PROGRAMDBHELPER", "program is in database but invalid");
+//                        return false;
+//                    }
+                }
+                else return false;
+            } catch (Exception ex) {
+                Log.e("PROGRAMDBHELPER", "IsInDB exception: "+ ex.toString());
+                return false;
             }
         }
-        Log.d("PROGRAMDBHELPER", "program is not in database");
+        Log.d("PROGRAMDBHELPER", "Program '"+programname+"' is not in database");
+        if (c != null && !c.isClosed()) c.close();
         return false;
+    }
+
+    @Override
+    public void allInfoDownloadCompleteCallback(ProgramEntry program, String result) {
+        Log.d("PROGRAMDBHELPER", "infoDownloadCompleteCallback: Called back with message: " + result);
+        showIsBeingAdded(program.ProgramName);
+        programAddtoDB(program);
+        showWasAdded(program.ProgramName);
+    }
+    @Override
+    public void basicInfoDownloadCompleteCallback(ProgramEntry program, String result) {
+        Log.d("PROGRAMDBHELPER", "basicInfoDownloadCompleteCallback: Called back with message: " + result);
+        showIsBeingAdded(program.ProgramName);
+        programAddtoDB(program);
+        showWasAdded(program.ProgramName);
+    }
+    @Override
+    public void imdbInfoDownloadCompleteCallback(ProgramEntry program, String result) {
+        Log.d("PROGRAMDBHELPER", "imdbInfoDownloadCompleteCallback: Called back with message: " + result);
+        showIsBeingAdded(program.ProgramName);
+        programAddtoDB(program);
+        showWasAdded(program.ProgramName);
+    }
+
+    @Override
+    public void imagesDownloadCompleteCallback(ProgramEntry program, String result) {
+        Log.d("PROGRAMDBHELPER", "imagesDownloadCompleteCallback: Called back with message: " + result);
+        showIsBeingAdded(program.ProgramName);
+        programAddtoDB(program);
+        showWasAdded(program.ProgramName);
+    }
+
+    @Override
+    public void infoDownloadFailedCallback(ProgramEntry program, String result) {
+        Log.d("PROGRAMDBHELPER", "infoDownloadFailedCallback: Called back with message: " + result);
+        showIsBeingAdded(program.ProgramName);
+        programAddtoDB(program);
+        showWasAdded(program.ProgramName);
+    }
+
+    @Override
+    public void imagesDownloadFailedCallback(ProgramEntry program, String result) {
+        Log.d("PROGRAMDBHELPER", "imagesDownloadFailedCallback: Called back with message: " + result);
+        showIsBeingAdded(program.ProgramName);
+        programAddtoDB(program);
+        showWasAdded(program.ProgramName);
     }
 }

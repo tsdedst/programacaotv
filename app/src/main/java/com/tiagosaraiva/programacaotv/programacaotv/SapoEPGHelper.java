@@ -13,12 +13,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
-import java.util.concurrent.ExecutionException;
 import java.util.Date;
 
 /**
@@ -30,6 +27,7 @@ public class SapoEPGHelper {
     private CacheHelper mCache;
     private Context mContext;
     private ProgramDbHelper mProgramCache;
+    private EpisodeDbHelper mEpisodeCache;
 
     private final String BASEURL = "http://services.sapo.pt/EPG/";
     private final String CHANNELLISTNAME = "LIST";
@@ -53,6 +51,7 @@ public class SapoEPGHelper {
         this.mContext = context;
         this.mCache = new CacheHelper(context);
         this.mProgramCache = new ProgramDbHelper(context);
+        this.mEpisodeCache = new EpisodeDbHelper(context);
         this.ChannelMap = GetChannelArrayList();
     }
 
@@ -179,11 +178,11 @@ public class SapoEPGHelper {
 
     }
 
-    public List<EpisodeEntry> GetProgramArrayList(String channelInitials) {
-        return GetProgramArrayList(channelInitials, false);
+    public void InitializeCaches(String channelInitials) {
+        InitializeCaches(channelInitials, false);
     }
-    public List<EpisodeEntry> GetProgramArrayList(String channelInitials, boolean forceUpdate) {
-        List<EpisodeEntry> ret = new ArrayList<EpisodeEntry>();
+    public void InitializeCaches(String channelInitials, boolean forceUpdate) {
+//        List<EpisodeEntry> ret = new ArrayList<EpisodeEntry>();
         JSONObject jsonlist = GetProgramList(channelInitials, forceUpdate);
         Log.d("SAPOEPGHELPER", "JSON LIST" + jsonlist.toString());
         try {
@@ -212,19 +211,29 @@ public class SapoEPGHelper {
                     //todo: handle : Log.d("SAPOEPGHELPER", "Problem getting season or episode object");
                 }
 
-                mProgramCache.programAddEntry(new ProgramEntry(programname, sigla, description, shortdesc));
-                EpisodeEntry ep = new EpisodeEntry(programname, starttime,endtime,programseason,programepisode,id);
-                Log.d("SAPOEPGHELPER", "Episode: " +ep.toString());
-                ret.add(ep);
+                mProgramCache.programAddEntry(programname, shortdesc, description);
+                mEpisodeCache.addEntry(new EpisodeEntry(programname, starttime, endtime, channelInitials));
+//                Log.d("SAPOEPGHELPER", "Episode: " +ep.toString());
+//                ret.add(ep);
             }
-            return ret;
+//            return ret;
 
         } catch (JSONException ex) {
             //todo: handle you shiiiiit
-            Log.e("SAPOEPGHELPER", "GetProgramArrayList Cannot get JSON object: " +ex.toString() );
-            return null;
+            Log.e("SAPOEPGHELPER", "InitializeCaches Cannot get JSON object: " +ex.toString() );
+//            return null;
         }
     }
+
+    public ProgramDbHelper GetProgramCache()
+    {
+        return mProgramCache;
+    }
+    public EpisodeDbHelper GetEpisodeCache()
+    {
+        return mEpisodeCache;
+    }
+
 
     private String GetJSONString(JSONObject obj, String name) {
         try {

@@ -52,7 +52,6 @@ public class DownloadJSONAsync extends AsyncTask<URL, Void, String> {
         this.mToken = token;
 
     }
-
     public DownloadJSONAsync(JSONObject jsonlogin) {
         this.mJsonLogin = jsonlogin;
     }
@@ -254,7 +253,7 @@ public class DownloadJSONAsync extends AsyncTask<URL, Void, String> {
         try {
             URL urlAction = new URL(url);
             DownloadJSONAsync j = new DownloadJSONAsync();
-
+            Log.d("DOWNLOADJSON", "parseIMDBid executing a new Asynch task on: '" + url);
             j.execute(urlAction);
             try{
                 String result = j.get();
@@ -263,7 +262,7 @@ public class DownloadJSONAsync extends AsyncTask<URL, Void, String> {
                 }
                 else
                 {
-                    Log.d("DOWNLOADJSON", "parseIMDBid empty restulr from url: '" + url);
+                    Log.d("DOWNLOADJSON", "parseIMDBid empty restult from url: '" + url);
                     return null;
                 }
             } catch(InterruptedException ex)
@@ -293,4 +292,6 @@ public class DownloadJSONAsync extends AsyncTask<URL, Void, String> {
             Log.e("DOWNLOADJSON", "parseIMDBid result not found: " + result);
         return result;
     }
+
+
 }

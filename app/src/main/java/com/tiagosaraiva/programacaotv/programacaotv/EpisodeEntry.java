@@ -15,49 +15,48 @@ public class EpisodeEntry {
     String EndTime;
     String ProgramSeason;
     String ProgramEpisode;
-    String Id;
+    String Channel;
+    static final String COLUMN_NAME_PROGRAM = "PROGRAM";
+    static final String COLUMN_NAME_STARTDATE = "STARTDATE";
+    static final String COLUMN_NAME_ENDDATE = "ENDDATE";
+    static final String COLUMN_NAME_SEASON = "SEASON";
+    static final String COLUMN_NAME_EPISODE = "EPISODE";
+    static final String COLUMN_NAME_CHANNEL = "CHANNEL";
 
     public EpisodeEntry(String prog,
                         String starttime,
                         String endtime,
                         String programseason,
                         String programepisode,
-                        String id)
+                        String channel)
     {
-        this.Program =  prog;
+        MeoName meoname =new MeoName(prog);
+        this.Program =  meoname.Title;
         this.StartTime =  starttime;
         this.EndTime =  endtime;
         this.ProgramSeason =  programseason;
         this.ProgramEpisode =  programepisode;
-        this.Id =  id;
+        this.Channel =  channel;
         processProgramName(prog);
-
     }
+    public EpisodeEntry(String prog,
+                        String starttime,
+                        String endtime,
+                        String channel)
+    {
+        this.Program =  prog;
+        this.StartTime =  starttime;
+        this.EndTime =  endtime;
+        this.Channel =  channel;
+        processProgramName(prog);
+    }
+
     public void processProgramName(String programName)
     {
-
-        Matcher seasonepisode_match = Pattern.compile("(\\s+)T(\\d+)(\\s+)-(\\s+)(Ep\\.)(\\s+)(\\d+)").matcher(programName);
-        if (seasonepisode_match.find( )) {
-            // Now create matcher object.
-            Matcher getseasonpart_match = Pattern.compile("(\\s+)T(\\d+)").matcher(seasonepisode_match.group(0));
-            if (getseasonpart_match.find())
-            {
-                Matcher replaceseasonpart_match = Pattern.compile("(\\s+)T").matcher(getseasonpart_match.group(0));
-                if (replaceseasonpart_match.find()){
-                    this.ProgramSeason = replaceseasonpart_match.replaceAll("");
-                }
-            }
-        }
-
-        Matcher episode_match = Pattern.compile("(\\s+)-(\\s+)(Ep\\.)(\\s+)(\\d+)").matcher(programName);
-        if (episode_match.find( )) {
-
-            // Now create matcher object.
-            Matcher replaceeppart_match = Pattern.compile("(\\s+)-(\\s+)(Ep\\.)(\\s+)").matcher(episode_match.group(0));
-            if (replaceeppart_match.find()) {
-                this.ProgramEpisode = replaceeppart_match.replaceAll("");
-            }
-        }
+        MeoName meoname =new MeoName(programName);
+        Program = meoname.Title;
+        ProgramSeason = meoname.Season;
+        ProgramEpisode = meoname.Episode;
     }
 
 
