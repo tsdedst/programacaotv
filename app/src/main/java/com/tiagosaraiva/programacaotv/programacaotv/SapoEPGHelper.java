@@ -220,7 +220,19 @@ class SapoEPGHelper {
         }
         return ret;
     }
-
+    public List<String> GetChannelStringList()
+    {
+        List<String> ret = new ArrayList<>();
+        for (int i =0; i < ChannelMap.size(); i++)
+        {
+            ret.add(ChannelMap.get(i).ChannelName);
+        }
+        return ret;
+    }
+    public String GetSiglaFromChannelNum(int num)
+    {
+        return ChannelMap.get(num).Sigla;
+    }
     public ProgramDbHelper GetProgramCache()
     {
         return mProgramCache;

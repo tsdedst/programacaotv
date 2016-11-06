@@ -7,19 +7,53 @@
     android:layout_height="match_parent"
     android:fitsSystemWindows="true"
     tools:openDrawer="start">
+    <!--What ever your want in the Right drawer, put it in  below RelativeLayout -->
 
     <include
+        android:id="@+id/navigation_drawer_app_bar"
         layout="@layout/app_bar_main"
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
 
+    <RelativeLayout
+        android:id="@+id/relativelayout1"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content" >
+
+    </RelativeLayout>
+
     <android.support.design.widget.NavigationView
         android:id="@+id/nav_view"
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_gravity="start"
         android:fitsSystemWindows="true"
-        app:headerLayout="@layout/nav_header_main"
-        app:menu="@menu/activity_main_drawer" />
+        android:layout_below="@id/navigation_drawer_app_bar">
+        <include
+            android:id="@+id/navigation_drawer_app_bar"
+            layout="@layout/app_bar_main"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_below="@id/navigation_drawer_app_bar"/>
+
+        <RelativeLayout
+            android:id="@+id/navigation_drawer_relative"
+            android:orientation="vertical"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_below="@id/navigation_drawer_app_bar">
+
+            <include
+                android:id="@+id/navigation_drawer_header_include"
+                layout="@layout/nav_header_main" />
+
+            <ListView
+                android:id="@+id/navigation_drawer_list"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_below="@id/navigation_drawer_header_include"/>
+        </RelativeLayout>
+    </android.support.design.widget.NavigationView>
+
 
 </android.support.v4.widget.DrawerLayout>
