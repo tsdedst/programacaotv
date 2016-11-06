@@ -177,7 +177,7 @@ public class ProgramEntry extends AsyncTask {
         this.HasTVDBImages = hasTVDBImages();
     }
     private boolean hasIMDBInfo() {
-       if (this.IMDBImdbId != null && this.IMDBTitle != null)
+       if (this.IMDBImdbId != null && this.IMDBImdbrating != null)
            return true;
        return false;
    }
@@ -676,6 +676,7 @@ public class ProgramEntry extends AsyncTask {
         //mProgramDBHelper.allInfoDownloadCompleteCallback(this, "info download finished");
 //        Log.d("PROGRAMENTRY", "onPostExecute finishing");
         refreshContentInfo();
+        mProgramDBHelper.allInfoDownloadCompleteCallback(this, "TMDB info ready");
     }
 
     @Override

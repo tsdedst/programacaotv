@@ -9,6 +9,8 @@ import org.json.JSONObject;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.util.List;
+
 import static org.junit.Assert.*;
 
 /**
@@ -28,7 +30,7 @@ public class ExampleInstrumentedTest {
 
 
     @Test
-    public void Tzsest01() throws Exception {
+    public void Test01() throws Exception {
         // Context of the app under test.
         Context appContext = InstrumentationRegistry.getTargetContext();
 
@@ -129,6 +131,30 @@ public class ExampleInstrumentedTest {
         Log.d("TEST", "Program Name: " +pe3.ProgramName+", IMDB rating: " + pe3.IMDBImdbrating);
         Log.d("TEST", "Program Name: " +pe4.ProgramName+", IMDB rating: " + pe4.IMDBImdbrating);
 
+
+    }
+
+    @Test
+    public void Test04() throws Exception {
+        Context appContext = InstrumentationRegistry.getTargetContext();
+
+        SapoEPGHelper s = new SapoEPGHelper(appContext);
+        s.InitializeCaches("TVC1");
+        //Log.d("TEST", "Channel List: " + s.GetChannelList().toString());
+
+        //Log.d("TEST", "SIC LIST: " + s.GetEpisodeCache().getEpisodesOfChannel("TVC1"));
+        List<EpisodeEntry> listtvc = s.GetEpisodeCache().getEpisodesOfChannel("TVC1");
+        //ProgramDbHelper cache = s.GetProgramCache();
+        for (int i = 0; i < listtvc.size(); i++)
+        {
+            EpisodeEntry ep = listtvc.get(i);
+            ProgramEntry p = s.GetProgramCache().GetProgram(ep.Program);
+            Log.d("Entries" , "Has IMDB Info: " + p.HasIMDBInfo);
+            if (!p.HasIMDBInfo)
+                p.DownloadIMDBInfo();
+            Log.d("Entries" , "Program name: " + p.ProgramName + ", IMDB rating: " +p.IMDBImdbrating+ ", Start date: "+ ep.StartTime+ ", Network: " + ep.Channel);
+
+        }
 
     }
 }

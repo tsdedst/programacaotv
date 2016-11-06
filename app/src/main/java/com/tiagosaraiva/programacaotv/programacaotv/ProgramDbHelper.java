@@ -21,15 +21,15 @@ public class ProgramDbHelper extends SQLiteOpenHelper implements InfoCompleteLis
     private static final int DATABASE_VERSION = 5;
     private static final String DATABASE_NAME = "programinfo";
     private static final String TEXT_TYPE = " TEXT";
-    private static final String COMMA_SEP = ",";
+    private static final String COMMA_SEP = ", ";
     private static final String TABLE_NAME = "programinfo";
     /* Inner class that defines the table contents */
     private List<String> AddedShows;
     private List<String> AddingShows;
 
     static final String SQL_CREATE_TABLE =
-            "CREATE TABLE " + TABLE_NAME + " (" +
-                    ProgramEntry.COLUMN_NAME_PROGRAM + TEXT_TYPE + COMMA_SEP +
+            "CREATE TABLE " + TABLE_NAME + " (" + "id INTEGER PRIMARY KEY, " +
+                    ProgramEntry.COLUMN_NAME_PROGRAM +TEXT_TYPE + " unique" + COMMA_SEP +
                     ProgramEntry.COLUMN_NAME_CHANNEL + TEXT_TYPE + COMMA_SEP +
                     ProgramEntry.COLUMN_NAME_MEO_DESCRIPTION + TEXT_TYPE + COMMA_SEP +
                     ProgramEntry.COLUMN_NAME_SHORT_DESCRIPTION + TEXT_TYPE + COMMA_SEP +
@@ -142,7 +142,7 @@ public class ProgramDbHelper extends SQLiteOpenHelper implements InfoCompleteLis
 
 
     public void programAddtoDB(ProgramEntry program) {
-        Log.d("PROGRAMDBHELPER", "programAddtoDB: Add cache entry, channel: " + program.ChannelInitials + ", program: " + program.ProgramName + ", desc: " + program.ShortMeoDesc);
+        Log.d("PROGRAMDBHELPER", "programAddtoDB: Add cache entry, program: " + program.ProgramName + ", imdb rating: " + program.IMDBImdbrating + ", desc: " + program.ShortMeoDesc);
 
         // Create a new map of values, where column names are the keys
         ContentValues values = new ContentValues();
@@ -177,8 +177,8 @@ public class ProgramDbHelper extends SQLiteOpenHelper implements InfoCompleteLis
         values.put(ProgramEntry.COLUMN_NAME_TVDB_BANNER, program.TVDBBanner);
         // insert value
         SQLiteDatabase writableCacheDatabase = this.getWritableDatabase();
-        writableCacheDatabase.replace(TABLE_NAME, null, values);
-        writableCacheDatabase.close();
+        long l = writableCacheDatabase.replaceOrThrow(TABLE_NAME, null, values);
+        //writableCacheDatabase.close();
 
 
     }

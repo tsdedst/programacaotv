@@ -54,28 +54,28 @@ public class EpisodeDbHelper extends SQLiteOpenHelper {
     {
         SQLiteDatabase writableCacheDatabase = this.getWritableDatabase();
 
-        if (ep.StartTime == "")
-        {
-            ep.StartTime = DateHelper.getCurrentDateTimeString();
-        }
-        if (ep.EndTime == "")
-        {
-            ep.EndTime = DateHelper.getCurrentDateTimeString();
-        }
-        Log.d("EPISODEDBHELPER", "addEntry: Add episode entry: Program: '"+ep.Program+"' on Network: '"+ep.Channel+"', Starting on: '"+ep.StartTime+"'");
+        if (!isInDB(ep)) {
+            if (ep.StartTime == "") {
+                ep.StartTime = DateHelper.getCurrentDateTimeString();
+            }
+            if (ep.EndTime == "") {
+                ep.EndTime = DateHelper.getCurrentDateTimeString();
+            }
+            Log.d("EPISODEDBHELPER", "addEntry: Add episode entry: Program: '" + ep.Program + "' on Network: '" + ep.Channel + "', Starting on: '" + ep.StartTime + "'");
 
-        // Create a new map of values, where column names are the keys
-        ContentValues values = new ContentValues();
-        values.put(EpisodeEntry.COLUMN_NAME_PROGRAM, ep.Program);
-        values.put(EpisodeEntry.COLUMN_NAME_STARTDATE, ep.StartTime);
-        values.put(EpisodeEntry.COLUMN_NAME_ENDDATE, ep.EndTime);
-        values.put(EpisodeEntry.COLUMN_NAME_SEASON, ep.ProgramSeason);
-        values.put(EpisodeEntry.COLUMN_NAME_EPISODE, ep.ProgramEpisode);
-        values.put(EpisodeEntry.COLUMN_NAME_CHANNEL, ep.Channel);
+            // Create a new map of values, where column names are the keys
+            ContentValues values = new ContentValues();
+            values.put(EpisodeEntry.COLUMN_NAME_PROGRAM, ep.Program);
+            values.put(EpisodeEntry.COLUMN_NAME_STARTDATE, ep.StartTime);
+            values.put(EpisodeEntry.COLUMN_NAME_ENDDATE, ep.EndTime);
+            values.put(EpisodeEntry.COLUMN_NAME_SEASON, ep.ProgramSeason);
+            values.put(EpisodeEntry.COLUMN_NAME_EPISODE, ep.ProgramEpisode);
+            values.put(EpisodeEntry.COLUMN_NAME_CHANNEL, ep.Channel);
 
-        // insert value
-        writableCacheDatabase.insert(TABLE_NAME, null, values);
-        writableCacheDatabase.close();
+            // insert value
+            writableCacheDatabase.insert(TABLE_NAME, null, values);
+         //   writableCacheDatabase.close();
+        }
 
     }
     public List<EpisodeEntry> getEpisodes(ProgramEntry program)
@@ -84,6 +84,44 @@ public class EpisodeDbHelper extends SQLiteOpenHelper {
         String programname = meoname.Title;
         return getEpisodesOfProgram(programname);
     }
+
+    public boolean isInDB(EpisodeEntry ep){
+        return isInDB(ep.Program, ep.StartTime);
+    }
+
+    public boolean isInDB(String programName, String startdate)
+    {
+        boolean ret;
+        SQLiteDatabase readableCacheDatabase;
+        String selection = EpisodeEntry.COLUMN_NAME_PROGRAM + " = ? AND " + EpisodeEntry.COLUMN_NAME_STARTDATE + " = ?";
+        String sortOrder = EpisodeEntry.COLUMN_NAME_STARTDATE;
+        String[] selectionArgs = { programName , startdate};
+        String[] projection = {
+                EpisodeEntry.COLUMN_NAME_PROGRAM,
+                EpisodeEntry.COLUMN_NAME_STARTDATE,
+                EpisodeEntry.COLUMN_NAME_ENDDATE,
+                EpisodeEntry.COLUMN_NAME_SEASON,
+                EpisodeEntry.COLUMN_NAME_EPISODE,
+                EpisodeEntry.COLUMN_NAME_CHANNEL
+        };
+        readableCacheDatabase = this.getReadableDatabase();
+        Cursor c = readableCacheDatabase.query(
+                TABLE_NAME,        // The table to query
+                projection,                               // The columns to return
+                selection,                                // The columns for the WHERE clause
+                selectionArgs,                            // The values for the WHERE clause
+                null,                                     // don't group the rows
+                null,                                     // don't filter by row groups
+                sortOrder                                 // The sort order
+        );
+        if (c != null && c.moveToFirst()) {
+            ret = true;
+        }
+        else ret = false;
+
+        return ret;
+    }
+
     public List<EpisodeEntry> getEpisodesOfProgram(String programName)
     {
         List<EpisodeEntry> ret = new ArrayList<>();
