@@ -5,10 +5,10 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
-import android.util.Log;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Created by tfsar on 05/11/2016.
@@ -21,7 +21,7 @@ public class EpisodeDbHelper extends SQLiteOpenHelper {
     private static final String DATETIME_TYPE = " TEXT";
     private static final String COMMA_SEP = ",";
     private static final String TABLE_NAME = "episodes";
-    static final String SQL_CREATE_TABLE =
+    private static final String SQL_CREATE_TABLE =
             "CREATE TABLE " + TABLE_NAME + " (" +
                     EpisodeEntry.COLUMN_NAME_PROGRAM+ TEXT_TYPE + COMMA_SEP +
                     EpisodeEntry.COLUMN_NAME_CHANNEL+ TEXT_TYPE + COMMA_SEP +
@@ -30,7 +30,7 @@ public class EpisodeDbHelper extends SQLiteOpenHelper {
                     EpisodeEntry.COLUMN_NAME_SEASON+ TEXT_TYPE + COMMA_SEP +
                     EpisodeEntry.COLUMN_NAME_EPISODE+ TEXT_TYPE +
                     ")";
-    static final String SQL_DELETE_ENTRIES =
+    private static final String SQL_DELETE_ENTRIES =
             "DROP TABLE IF EXISTS " + TABLE_NAME;
     EpisodeDbHelper(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
@@ -55,13 +55,13 @@ public class EpisodeDbHelper extends SQLiteOpenHelper {
         SQLiteDatabase writableCacheDatabase = this.getWritableDatabase();
 
         if (!isInDB(ep)) {
-            if (ep.StartTime == "") {
+            if (Objects.equals(ep.StartTime, "")) {
                 ep.StartTime = DateHelper.getCurrentDateTimeString();
             }
-            if (ep.EndTime == "") {
+            if (Objects.equals(ep.EndTime, "")) {
                 ep.EndTime = DateHelper.getCurrentDateTimeString();
             }
-            Log.d("EPISODEDBHELPER", "addEntry: Add episode entry: Program: '" + ep.Program + "' on Network: '" + ep.Channel + "', Starting on: '" + ep.StartTime + "'");
+//            Log.d("EPISODEDBHELPER", "addEntry: Add episode entry: Program: '" + ep.Program + "' on Network: '" + ep.Channel + "', Starting on: '" + ep.StartTime + "'");
 
             // Create a new map of values, where column names are the keys
             ContentValues values = new ContentValues();
@@ -114,10 +114,7 @@ public class EpisodeDbHelper extends SQLiteOpenHelper {
                 null,                                     // don't filter by row groups
                 sortOrder                                 // The sort order
         );
-        if (c != null && c.moveToFirst()) {
-            ret = true;
-        }
-        else ret = false;
+        ret = c != null && c.moveToFirst();
 
         return ret;
     }

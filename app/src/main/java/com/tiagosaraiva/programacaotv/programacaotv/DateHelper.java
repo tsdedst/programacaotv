@@ -10,20 +10,20 @@ import java.util.Locale;
  * Created by tfsar on 31/10/2016.
  */
 
-public class DateHelper {
+class DateHelper {
 
-    private static SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault());
+    private static final SimpleDateFormat dateFormat = new SimpleDateFormat(ProgramacaoTV.getAppContext().getResources().getString(R.string.date_format), Locale.getDefault());
 
     public static String getCurrentDateTimeString() {
         Date date = new Date();
-        Log.d("DATEHELPER", "getCurrentDateTimeString, Date: "+ date.toString() + ", Returning: "+ dateFormat.format(date));
+//        Log.d("DATEHELPER", "getCurrentDateTimeString, Date: "+ date.toString() + ", Returning: "+ dateFormat.format(date));
         return dateFormat.format(date);
     }
 
     public static Date getCurrentDateTime() {
-        Date date = new Date();
-        Log.d("DATEHELPER", "getCurrentDateTime, Date: "+ date.toString() + ", Returning: "+ dateFormat.format(date));
-        return date;
+
+//        Log.d("DATEHELPER", "getCurrentDateTime, Date: "+ date.toString() + ", Returning: "+ dateFormat.format(date));
+        return new Date();
     }
 
     public static Date getConvertedDateTime(String dateString) {
@@ -31,22 +31,18 @@ public class DateHelper {
         try {
             convertedDate = dateFormat.parse(dateString);
         } catch (java.text.ParseException e) {
-            // TODO Auto-generated catch block
-            // e.printStackTrace();
             Log.d("DATEHELPER", "getConvertedDateTime, Date not parseable: "+ dateString +", Returning: "+ convertedDate.toString());
         }
         return convertedDate;
     }
 
     public static String getDateTimeString(Date dateString) {
-        Log.d("DATEHELPER", "getConvertedDateTimeString, Date: "+ dateString.toString());
-
+//        Log.d("DATEHELPER", "getConvertedDateTimeString, Date: "+ dateString.toString());
         return dateFormat.format(dateString);
     }
 
     public static String getDateString(Date dateString) {
-        Log.d("DATEHELPER", "getConvertedDateTimeString, Date: "+ dateString.toString());
-
+//        Log.d("DATEHELPER", "getConvertedDateTimeString, Date: "+ dateString.toString());
         return dateFormat.format(dateString).split("\\s+")[0];
     }
 }

@@ -2,52 +2,41 @@ package com.tiagosaraiva.programacaotv.programacaotv;
 
 import android.content.SharedPreferences;
 import android.os.AsyncTask;
-import android.app.ProgressDialog;
-import android.content.Context;
-import android.os.AsyncTask;
 import android.preference.PreferenceManager;
 import android.util.Log;
 
-import org.apache.http.client.ClientProtocolException;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.entity.StringEntity;
-import org.apache.http.impl.client.DefaultHttpClient;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
-import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.Objects;
 import java.util.concurrent.ExecutionException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
-import org.apache.http.*;
 /**
  * Created by tfsar on 31/10/2016.
  */
 
-public class DownloadJSONAsync extends AsyncTask<URL, Void, String> {
+class DownloadJSONAsync extends AsyncTask<URL, Void, String> {
 
     private HttpURLConnection urlConnection;
     //private Context mContext;
     //private ProgressDialog mDialog;
     //private TaskListener  mListener;
-    JSONObject mJsonLogin = null;
-    String mToken = null;
+    private JSONObject mJsonLogin = null;
+    private String mToken = null;
 
-    public DownloadJSONAsync() {
+    private DownloadJSONAsync() {
 
     }
-    public DownloadJSONAsync(JSONObject jsonlogin, String token) {
+
+    private DownloadJSONAsync(JSONObject jsonlogin, String token) {
         this.mJsonLogin = jsonlogin;
         this.mToken = token;
 
@@ -56,88 +45,19 @@ public class DownloadJSONAsync extends AsyncTask<URL, Void, String> {
         this.mJsonLogin = jsonlogin;
     }
 
-    @Override
-    protected String doInBackground(URL... params) {
-        StringBuilder result = new StringBuilder();
-
-        try {
-            URL url = params[0];
-//            Proxy proxy = new Proxy(Proxy.Type.HTTP, new InetSocketAddress("10.0.0.1", 8080));
-
-            urlConnection = (HttpURLConnection) url.openConnection(/*proxy*/);
-            if (this.mToken != null && this.mToken != "")
-            {
-                urlConnection.setRequestProperty("Authorization", "Bearer "+this.mToken);
-                //Log.d("DOWNLOADJSONASYNC", "doInBackgorund detected tokenobject : "+ this.mToken+ ", trying connection to: "+ url.toString());
-
-            }
-            urlConnection.setDoInput(true);
-            urlConnection.setConnectTimeout(2 * 1000);
-            urlConnection.setReadTimeout(3 * 1000);
-
-            if (this.mJsonLogin  != null)
-            {
-                //Log.d("DOWNLOADJSONASYNC", "doInBackgorund detected json login object : "+ this.mJsonLogin.toString()+ ", trying connection to: "+ url.toString());
-                urlConnection.setRequestProperty("Content-Type", "application/json; charset=UTF-8");
-                urlConnection.setRequestProperty("Accept", "application/json");
-                urlConnection.setRequestMethod("POST");
-                OutputStream os = urlConnection.getOutputStream();
-                os.write(this.mJsonLogin.toString().getBytes("UTF-8"));
-                os.close();
-            }
-
-            //Log.d("DOWNLOADJSONASYNC", "doInBackground Header fields: "+ urlConnection.getHeaderFields().toString());
-            if (urlConnection.getResponseCode() == HttpURLConnection.HTTP_OK) {
-
-                InputStream in = new BufferedInputStream(urlConnection.getInputStream());
-                BufferedReader reader = new BufferedReader(new InputStreamReader(in));
-
-                String line;
-                while ((line = reader.readLine()) != null) {
-                    result.append(line);
-                }
-            }
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        } finally {
-            urlConnection.disconnect();
-        }
-
-        //Log.d("DOWNLOADJSON", "doInBackground, final string: " + result.toString());
-        return result.toString();
-    }
-
-
-    @Override
-    protected void onPreExecute() {
-        super.onPreExecute();
-        //Log.d("DOWNLOADJSON", "onPreExecute");
-    }
-
-    @Override
-    protected void onPostExecute(String s) {
-        super.onPostExecute(s);
-        //Log.d("DOWNLOADJSON", "onPostExecute");
-
-    }
-
-    @Override
-    protected void onProgressUpdate(Void... values) {
-        super.onProgressUpdate(values);
-       // Log.d("DOWNLOADJSON", "onProgressUpdate");
-    }
-
     public static JSONObject downloadFromURL(String url) {
         return downloadFromURL(url, null, null);
     }
-    public static JSONObject downloadFromURL(String url, String token) {
+
+    private static JSONObject downloadFromURL(String url, String token) {
         return downloadFromURL(url, null, token);
     }
-    public static JSONObject downloadFromURL(String url, JSONObject jsonlogin) {
+
+    private static JSONObject downloadFromURL(String url, JSONObject jsonlogin) {
         return downloadFromURL(url, jsonlogin, null);
     }
-    public static JSONObject downloadFromURL(String url, JSONObject jsonlogin, String token) {
+
+    private static JSONObject downloadFromURL(String url, JSONObject jsonlogin, String token) {
         try {
             URL urlAction = new URL(url);
             //Log.d("DOWNLOADJSON", "downloadFromDaInterwebz: string: " + url);
@@ -146,10 +66,9 @@ public class DownloadJSONAsync extends AsyncTask<URL, Void, String> {
             j.execute(urlAction);
             try{
                 String result = j.get();
-                if (result != null && result != "") {
+                if (result != null && !Objects.equals(result, "")) {
                     try {
-                        JSONObject ret = new JSONObject(result);
-                        return ret;
+                        return new JSONObject(result);
                     } catch (JSONException ex) {
                         Log.e("DOWNLOADJSON", "downloadFromURL JSONException, result from url: '" + url + "' is: '" + result + "'. Error: " + ex.toString());
                         return null;
@@ -172,15 +91,15 @@ public class DownloadJSONAsync extends AsyncTask<URL, Void, String> {
         }
         catch (MalformedURLException ex)
         {
-            Log.e("DOWNLOADJSON", "downloadFromURL MalformedURLException: "+url.toString() + ", exception: "    + ex.toString());
+            Log.e("DOWNLOADJSON", "downloadFromURL MalformedURLException: " + url + ", exception: " + ex.toString());
             return null;
         }
     }
 
-    public static String getNewTVDBToken(String apikey)
+    private static String getNewTVDBToken(String apikey)
     {
         SharedPreferences shp = PreferenceManager.getDefaultSharedPreferences(ProgramacaoTV.getAppContext());
-        String token ="";
+        String token;
         try {
             JSONObject json = new JSONObject();
 
@@ -203,13 +122,14 @@ public class DownloadJSONAsync extends AsyncTask<URL, Void, String> {
             return null;
         }
     }
+
     public static JSONObject downloadFromURLWithToken(String apikey, String url)
     {
         //SharedPreferences shp = PreferenceManager.getDefaultSharedPreferences(ProgramacaoTV.getAppContext());
         SharedPreferences shp = PreferenceManager.getDefaultSharedPreferences(ProgramacaoTV.getAppContext());
         String token = shp.getString("TVDBToken", "");
-        JSONObject ret = null;
-        if (token != "") {
+        JSONObject ret;
+        if (!Objects.equals(token, "")) {
             //Log.d("DOWNLOADJSON", "downloadFromURLWithToken: using an old token");
             // try to download with our existing token
             ret = downloadFromURL(url, token);
@@ -253,11 +173,11 @@ public class DownloadJSONAsync extends AsyncTask<URL, Void, String> {
         try {
             URL urlAction = new URL(url);
             DownloadJSONAsync j = new DownloadJSONAsync();
-            Log.d("DOWNLOADJSON", "parseIMDBid executing a new Asynch task on: '" + url);
+//            Log.d("DOWNLOADJSON", "parseIMDBid executing a new Asynch task on: '" + url);
             j.execute(urlAction);
             try{
                 String result = j.get();
-                if (result != null && result != "") {
+                if (result != null && !Objects.equals(result, "")) {
                     webpage = result;
                 }
                 else
@@ -291,6 +211,75 @@ public class DownloadJSONAsync extends AsyncTask<URL, Void, String> {
         else
             Log.e("DOWNLOADJSON", "parseIMDBid result not found: " + result);
         return result;
+    }
+
+    @Override
+    protected String doInBackground(URL... params) {
+        StringBuilder result = new StringBuilder();
+
+        try {
+            URL url = params[0];
+//            Proxy proxy = new Proxy(Proxy.Type.HTTP, new InetSocketAddress("10.0.0.1", 8080));
+
+            urlConnection = (HttpURLConnection) url.openConnection(/*proxy*/);
+            if (this.mToken != null && !Objects.equals(this.mToken, "")) {
+                urlConnection.setRequestProperty("Authorization", "Bearer " + this.mToken);
+                //Log.d("DOWNLOADJSONASYNC", "doInBackgorund detected tokenobject : "+ this.mToken+ ", trying connection to: "+ url.toString());
+
+            }
+            urlConnection.setDoInput(true);
+            urlConnection.setConnectTimeout(2 * 1000);
+            urlConnection.setReadTimeout(3 * 1000);
+
+            if (this.mJsonLogin != null) {
+                //Log.d("DOWNLOADJSONASYNC", "doInBackgorund detected json login object : "+ this.mJsonLogin.toString()+ ", trying connection to: "+ url.toString());
+                urlConnection.setRequestProperty("Content-Type", "application/json; charset=UTF-8");
+                urlConnection.setRequestProperty("Accept", "application/json");
+                urlConnection.setRequestMethod("POST");
+                OutputStream os = urlConnection.getOutputStream();
+                os.write(this.mJsonLogin.toString().getBytes("UTF-8"));
+                os.close();
+            }
+
+            //Log.d("DOWNLOADJSONASYNC", "doInBackground Header fields: "+ urlConnection.getHeaderFields().toString());
+            if (urlConnection.getResponseCode() == HttpURLConnection.HTTP_OK) {
+
+                InputStream in = new BufferedInputStream(urlConnection.getInputStream());
+                BufferedReader reader = new BufferedReader(new InputStreamReader(in));
+
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    result.append(line);
+                }
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            urlConnection.disconnect();
+        }
+
+        //Log.d("DOWNLOADJSON", "doInBackground, final string: " + result.toString());
+        return result.toString();
+    }
+
+    @Override
+    protected void onPreExecute() {
+        super.onPreExecute();
+        //Log.d("DOWNLOADJSON", "onPreExecute");
+    }
+
+    @Override
+    protected void onPostExecute(String s) {
+        super.onPostExecute(s);
+        //Log.d("DOWNLOADJSON", "onPostExecute");
+
+    }
+
+    @Override
+    protected void onProgressUpdate(Void... values) {
+        super.onProgressUpdate(values);
+        // Log.d("DOWNLOADJSON", "onProgressUpdate");
     }
 
 

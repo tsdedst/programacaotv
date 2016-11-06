@@ -20,8 +20,7 @@ import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLEncoder;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import java.util.Objects;
 
 /**
  * Created by tfsaraiva on 31/10/2016.
@@ -59,8 +58,6 @@ public class ProgramEntry extends AsyncTask {
     static final String COLUMN_NAME_TMDB_POSTER_PATH = "TMDBPOSTER_PATH";
     static final String COLUMN_NAME_TMDB_POPULARITY = "TMDBPOPULARITY";
     static final String COLUMN_NAME_TVDB_BANNER = "TVDBBANNER";
-
-    ProgramDbHelper mProgramDBHelper;
     String ProgramName;
     String ChannelInitials;
     String ShortMeoDesc;
@@ -96,11 +93,11 @@ public class ProgramEntry extends AsyncTask {
     boolean HasIMDBImages;
     boolean HasTMDBImages;
     boolean HasTVDBImages;
-
     boolean NeedsIMDBInfo;
     boolean NeedsTMDBInfo;
     boolean NeedsIMDBImages;
     boolean NeedsTMDBImages;
+    private ProgramDbHelper mProgramDBHelper;
 
     ProgramEntry(ProgramDbHelper dbhelper,
                  String programname,
@@ -168,45 +165,6 @@ public class ProgramEntry extends AsyncTask {
 
     }
 
-    public void refreshContentInfo() {
-        this.HasIMDBInfo =   hasIMDBInfo();
-        this.HasTMDBInfo =   hasTMDBInfo();
-        this.HasTVDBInfo =   hasTVDBInfo();
-        this.HasIMDBImages = hasIMDBImages();
-        this.HasTMDBImages = hasTMDBImages();
-        this.HasTVDBImages = hasTVDBImages();
-    }
-    private boolean hasIMDBInfo() {
-       if (this.IMDBImdbId != null && this.IMDBImdbrating != null)
-           return true;
-       return false;
-   }
-    private boolean hasTMDBInfo() {
-       if (this.TMDBOverview != null && this.TMDBPosterURL != null)
-           return true;
-       return false;
-   }
-    private boolean hasTVDBInfo() {
-       if (this.TVDBBanner != null)
-           return true;
-       return false;
-   }
-    private boolean hasIMDBImages() {
-       if (this.IMDBImageFile != null)
-           return true;
-       return false;
-   }
-    private boolean hasTMDBImages() {
-       if (this.TMDBPosterFile != null && this.TMDBBackdropFile != null)
-           return true;
-       return false;
-   }
-    private boolean hasTVDBImages() {
-       if (this.TVDBBanner != null)
-           return true;
-       return false;
-   }
-
     ProgramEntry(ProgramDbHelper dbhelper, String programname, String meodesc, String shortdesc, boolean getImdb, boolean getTmdb, boolean getImdbImages, boolean getTmdbImages)
     {
         this.mProgramDBHelper = dbhelper;
@@ -225,6 +183,39 @@ public class ProgramEntry extends AsyncTask {
 
         this.execute();
 
+    }
+
+    private void refreshContentInfo() {
+        this.HasIMDBInfo = hasIMDBInfo();
+        this.HasTMDBInfo = hasTMDBInfo();
+        this.HasTVDBInfo = hasTVDBInfo();
+        this.HasIMDBImages = hasIMDBImages();
+        this.HasTMDBImages = hasTMDBImages();
+        this.HasTVDBImages = hasTVDBImages();
+    }
+
+    private boolean hasIMDBInfo() {
+        return this.IMDBImdbId != null && this.IMDBImdbrating != null;
+    }
+
+    private boolean hasTMDBInfo() {
+        return this.TMDBOverview != null && this.TMDBPosterURL != null;
+    }
+
+    private boolean hasTVDBInfo() {
+        return this.TVDBBanner != null;
+    }
+
+    private boolean hasIMDBImages() {
+        return this.IMDBImageFile != null;
+    }
+
+    private boolean hasTMDBImages() {
+        return this.TMDBPosterFile != null && this.TMDBBackdropFile != null;
+    }
+
+    private boolean hasTVDBImages() {
+        return this.TVDBBanner != null;
     }
 
     public void DownloadIMDBInfo(){
@@ -275,9 +266,8 @@ public class ProgramEntry extends AsyncTask {
             } catch (Exception e) {
                 Log.e("PROGRAMENTRY", "Image download failed: " + e.toString());
                 return null;
-            } finally {
-                return final_filename;
             }
+            return final_filename;
         }
         else return final_filename;
     }
@@ -315,7 +305,7 @@ public class ProgramEntry extends AsyncTask {
 
             editor.putString("TMDBbackdropImagePath", tmdbbackdropimagepath);
             editor.putString("TMDBposterImagePath", tmdbposterimagepath);
-            editor.commit();
+            editor.apply();
         }
 
         tmdbbackdropimagepath += this.TMDBBackdropURL;
@@ -340,18 +330,18 @@ public class ProgramEntry extends AsyncTask {
         this.HasTMDBImages = true;
     }
     private void GetTVDBImages() {
-
+        //todo
     }
 
     private void ProcessIMDBDInfo()  {
         this.IMDBImdbId = GetIMDBId();
-        Log.d("PROGRAMENTRY","IMDB id: " + this.IMDBImdbId.toString());
+//        Log.d("PROGRAMENTRY","IMDB id: " + this.IMDBImdbId.toString());
 
         JSONObject info = GetIMDBInfo();
 
         if (info != null)
         {
-            Log.d("PROGRAMENTRY","IMDB info: " + info.toString());
+//            Log.d("PROGRAMENTRY","IMDB info: " + info.toString());
             if (GetJSONString(info, "Response").compareTo("True") == 0) {
                 this.IMDBInfoComplete = "Info";
                 this.IMDBTitle = GetJSONString(info, "Title");
@@ -387,7 +377,7 @@ public class ProgramEntry extends AsyncTask {
         JSONObject response = GetTVDBInfo();
         if (response != null)
         {
-            Log.d("PROGRAMENTRY","TheMovieDB info: "+response.toString());
+//            Log.d("PROGRAMENTRY","TheMovieDB info: "+response.toString());
             JSONArray info = null;
             try {
                 info = response.getJSONArray("data");
@@ -417,7 +407,7 @@ public class ProgramEntry extends AsyncTask {
         JSONObject response = GetTMDBInfo();
         if (response != null)
         {
-            Log.d("PROGRAMENTRY","TheMovieDB info: "+response.toString());
+//            Log.d("PROGRAMENTRY","TheMovieDB info: "+response.toString());
             JSONArray info = null;
             try {
                 info = response.getJSONArray("movie_results");
@@ -464,7 +454,7 @@ public class ProgramEntry extends AsyncTask {
             action += "q=" + URLEncoder.encode(this.ProgramName, "UTF-8");
             action += "&";
             action += "s="+ "all";
-            Log.d("PROGRAMENTRY", "GetIMDBId Getting IMDB ID from: " + action.toString());
+//            Log.d("PROGRAMENTRY", "GetIMDBId Getting IMDB ID from: " + action.toString());
             return DownloadJSONAsync.parseIMDBid(action);
         } catch (UnsupportedEncodingException ex)
         {
@@ -489,10 +479,10 @@ public class ProgramEntry extends AsyncTask {
                 return null;
             }
             // if we get a search result based on the name of the show we try to get the first result's ID
-            Log.d("PROGRAMENTRY","Get IMDB Description from name: "+action.toString());
+//            Log.d("PROGRAMENTRY","Get IMDB Description from name: "+action.toString());
             JSONObject search_result = DownloadJSONAsync.downloadFromURL(action);
             if (search_result != null) {
-                JSONArray info = null;
+                JSONArray info;
                 try {
                     info = search_result.getJSONArray("Search");
                     this.IMDBImdbId = GetJSONString(info.getJSONObject(0), "imdbID");
@@ -510,7 +500,7 @@ public class ProgramEntry extends AsyncTask {
         }
 
         // since we now almost certainly have an ID, either based on Name or from parsing the site:
-        if (this.IMDBImdbId != null && this.IMDBImdbId != "") {
+        if (this.IMDBImdbId != null && !Objects.equals(this.IMDBImdbId, "")) {
             try {
                 String action2 = ProgramacaoTV.getAppContext().getResources().getString(R.string.imdb_api_base_url);
                 action2 += "?";
@@ -519,7 +509,7 @@ public class ProgramEntry extends AsyncTask {
                 action2 += "plot=" + "full";
                 action2 += "&";
                 action2 += "r=" + "json";
-                Log.d("PROGRAMENTRY","Get IMDB Description from ID: "+action2.toString());
+//                Log.d("PROGRAMENTRY","Get IMDB Description from ID: "+action2.toString());
                 return DownloadJSONAsync.downloadFromURL(action2);
             } catch (UnsupportedEncodingException ex) {
                 Log.e("PROGRAMENTRY", "GetIMDBInfo error encoding string: " + this.IMDBImdbId + ", error: " + ex.toString());
@@ -534,25 +524,25 @@ public class ProgramEntry extends AsyncTask {
         String api_key = ProgramacaoTV.getAppContext().getResources().getString(R.string.tmdb_api_key);
         try {
             String action;
-            if (this.IMDBImdbId != null && this.IMDBImdbId != "") {
+            if (this.IMDBImdbId != null && !Objects.equals(this.IMDBImdbId, "")) {
                 action = ProgramacaoTV.getAppContext().getResources().getString(R.string.tmdb_api_find_url) + URLEncoder.encode(this.IMDBImdbId, "UTF-8");
                 action += "?api_key=" + URLEncoder.encode(api_key, "UTF-8");
                 action += "&language=pt-PT";
                 action += "&external_source=imdb_id";
-                Log.d("PROGRAMENTRY","Get TheMovieDB Description: "+action.toString());
+//                Log.d("PROGRAMENTRY","Get TheMovieDB Description: "+action.toString());
                 return DownloadJSONAsync.downloadFromURL(action);
             } else {
                 action = ProgramacaoTV.getAppContext().getResources().getString(R.string.tmdb_api_base_url) ;
                 action += "?api_key=" + URLEncoder.encode(api_key, "UTF-8");
                 action += "&";
-                if (this.IMDBTitle == null || this.IMDBTitle == "") {
+                if (this.IMDBTitle == null || Objects.equals(this.IMDBTitle, "")) {
                     action += "query=" + URLEncoder.encode(this.ProgramName, "UTF-8");
                 } else {
                     action += "query=" + URLEncoder.encode(this.IMDBTitle, "UTF-8");
                 }
 
                 action += "&language=pt-PT";
-                Log.d("PROGRAMENTRY","Get TheMovieDB Description: "+action.toString());
+//                Log.d("PROGRAMENTRY","Get TheMovieDB Description: "+action.toString());
                 JSONObject result = DownloadJSONAsync.downloadFromURL(action);
                 JSONArray info;
                 try {
@@ -580,13 +570,13 @@ public class ProgramEntry extends AsyncTask {
         String actionimdbname = "";
         String actionmeoname = "";
 
-        if (this.IMDBImdbId != null && this.IMDBImdbId != "") {
+        if (this.IMDBImdbId != null && !Objects.equals(this.IMDBImdbId, "")) {
             try {
                 actionimdbid = action + "imdbId=" + URLEncoder.encode(this.IMDBImdbId, "UTF-8");
             } catch (UnsupportedEncodingException ex) {
                 Log.e("PROGRAMENTRY", "GetTVDBInfo error encoding string: " + this.ProgramName + ", error: " + ex.toString());
             }
-        } else if (this.IMDBTitle != null && this.IMDBTitle != "") {
+        } else if (this.IMDBTitle != null && !Objects.equals(this.IMDBTitle, "")) {
             try {
                 actionimdbname = action +  "name=" + URLEncoder.encode(this.IMDBTitle, "UTF-8");
             } catch (UnsupportedEncodingException ex) {
@@ -602,15 +592,15 @@ public class ProgramEntry extends AsyncTask {
 
         JSONObject ret = null;
         if (actionimdbid.compareTo("") != 0) {
-            Log.d("PROGRAMENTRY", "Get TVDB Description from imdbId: " + actionimdbid.toString());
+//            Log.d("PROGRAMENTRY", "Get TVDB Description from imdbId: " + actionimdbid.toString());
             ret = DownloadJSONAsync.downloadFromURLWithToken(api_key, actionimdbid);
         }
         if (ret == null && actionimdbname.compareTo("") != 0) {
-            Log.d("PROGRAMENTRY", "Get TVDB Description from imdb name: " + actionimdbname.toString());
+//            Log.d("PROGRAMENTRY", "Get TVDB Description from imdb name: " + actionimdbname.toString());
             ret = DownloadJSONAsync.downloadFromURLWithToken(api_key, actionimdbname);
         }
         if (ret == null && actionmeoname.compareTo("") != 0) {
-            Log.d("PROGRAMENTRY", "Get TVDB Description form meo name: " + actionmeoname.toString());
+//            Log.d("PROGRAMENTRY", "Get TVDB Description form meo name: " + actionmeoname.toString());
             ret = DownloadJSONAsync.downloadFromURLWithToken(api_key, actionmeoname);
         }
 
@@ -619,8 +609,7 @@ public class ProgramEntry extends AsyncTask {
 
     private String GetJSONString(JSONObject obj, String name) {
         try {
-            String ret = obj.getString(name);
-            return ret;
+            return obj.getString(name);
         }
         catch (JSONException ex)
         {
@@ -631,7 +620,7 @@ public class ProgramEntry extends AsyncTask {
 
     @Override
     protected Object doInBackground(Object[] params) {
-        Log.d("PROGRAMENTRY", "doInBackground starting");
+//        Log.d("PROGRAMENTRY", "doInBackground starting");
         if (this.NeedsIMDBImages) {
             GetIMDBImages();
             refreshContentInfo();

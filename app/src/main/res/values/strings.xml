@@ -8,7 +8,7 @@
 
     <string name="tvdb_api_key">F1F13B826C94A071</string>
     <string name="tmdb_api_key">1f9b44f4e58cb7f7172f6ca50e7b3bdc</string>
-
+    <string name="date_format">"yyyy-MM-dd HH:mm:ss"</string>
     <string name="episode_match_regex_pattern">(\\s+)-(\\s+)(Ep\\.)(\\s+)(\\d+)</string>
     <string name="episode_match_remove_regex_pattern">(\\s+)-(\\s+)(Ep\\.)(\\s+)</string>
     <string name="season_episode_match_regex_pattern">"(\\s+)T(\\d+)(\\s+)-(\\s+)(Ep\\.)(\\s+)(\\d+)</string>
@@ -20,4 +20,5 @@
     <string name="tmdb_api_base_url">https://api.themoviedb.org/3/search/movie</string>
     <string name="tmdb_api_conf_url">https://api.themoviedb.org/3/configuration</string>
     <string name="tmdb_api_find_url">https://api.themoviedb.org/3/find/</string>
+    <string name="sapo_base_rul">http://services.sapo.pt/EPG/</string>
 </resources>

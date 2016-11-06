@@ -15,38 +15,20 @@ import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.List;
 import java.util.Date;
+import java.util.List;
 
 /**
  * Created by tfsar on 31/10/2016.
  */
 
-public class SapoEPGHelper {
+class SapoEPGHelper {
 
+    public List<Channel> ChannelMap;
     private CacheHelper mCache;
     private Context mContext;
     private ProgramDbHelper mProgramCache;
     private EpisodeDbHelper mEpisodeCache;
-
-    private final String BASEURL = "http://services.sapo.pt/EPG/";
-    private final String CHANNELLISTNAME = "LIST";
-    private final int updateChannelListAge = 5; // days
-    private final int PROGRAMFUTUREDAYS = 15; // days
-    private final int PROGRAMPASTDAYS = 7; // days
-
-    public List<Channel> ChannelMap;
-    public class Channel {
-        String Sigla;
-        String ChannelName;
-        public Channel(String sigla, String name)
-        {
-            Sigla = sigla;
-            ChannelName = name;
-        }
-    }
-
-
     public SapoEPGHelper(Context context) {
         this.mContext = context;
         this.mCache = new CacheHelper(context);
@@ -59,19 +41,21 @@ public class SapoEPGHelper {
     {
         return GetChannelList(false);
     }
+
     public JSONObject GetChannelList(boolean forceUpdate) {
-        String action = BASEURL + "GetChannelListJSON";
+        String action = ProgramacaoTV.getAppContext().getResources().getString(R.string.sapo_base_rul) + "GetChannelListJSON";
+        String CHANNELLISTNAME = "LIST";
         Date lastUpdateDate = mCache.getUpdateDate(CHANNELLISTNAME);
 
         Calendar updateThresholdDate = Calendar.getInstance();
-        updateThresholdDate.add(Calendar.DAY_OF_MONTH, -updateChannelListAge);
+        updateThresholdDate.add(Calendar.DAY_OF_MONTH, -ProgramacaoTV.getAppContext().getResources().getInteger(R.integer.update_if_older_then));
 
         // Last update was before the time threshold for updating, OR forceUpdate is true
         if ((lastUpdateDate.getTime() - updateThresholdDate.getTime().getTime() < 0) || forceUpdate)
         {
-            Log.d("SAPOEPGHELPER", "Date of last update: " + DateHelper.getDateString(lastUpdateDate) +
-                    ", Update threshold date: " +DateHelper.getDateString(updateThresholdDate.getTime()) +
-                    " (" + updateChannelListAge + " days ago.)");
+//            Log.d("SAPOEPGHELPER", "Date of last update: " + DateHelper.getDateString(lastUpdateDate) +
+//                    ", Update threshold date: " +DateHelper.getDateString(updateThresholdDate.getTime()) +
+//                    " (" + updateChannelListAge + " days ago.)");
 
             JSONObject newChannelList = DownloadJSONAsync.downloadFromURL(action);
             if (newChannelList != null) {
@@ -86,12 +70,10 @@ public class SapoEPGHelper {
         {
             Log.d("SAPOEPGHELPER", "No need to update Channel List");
             try {
-                JSONObject channelList = new JSONObject(readFromFile(mContext, CHANNELLISTNAME));
-                return channelList;
+                return new JSONObject(readFromFile(mContext, CHANNELLISTNAME));
             }
             catch (JSONException ex)
             {
-                //todo: handle you shiiiiit
                 Log.e("SAPOEPGHELPER", "getChannelList Cannot read file, trying to update from web");
                 return GetChannelList(true);
             }
@@ -99,10 +81,11 @@ public class SapoEPGHelper {
     }
 
     public List<Channel> GetChannelArrayList() { return GetChannelArrayList(false); }
+
     public List<Channel> GetChannelArrayList(boolean forceUpdate) {
-        List<Channel> ret  = new ArrayList<Channel>();
+        List<Channel> ret = new ArrayList<>();
         JSONObject jsonlist = GetChannelList(forceUpdate);
-        Log.d("SAPOEPGHELPER", "JSON LIST" + jsonlist.toString());
+//        Log.d("SAPOEPGHELPER", "JSON LIST" + jsonlist.toString());
         try {
             JSONObject channelresponse = jsonlist.getJSONObject("GetChannelListResponse");
             JSONObject channelresult = channelresponse.getJSONObject("GetChannelListResult");
@@ -123,8 +106,9 @@ public class SapoEPGHelper {
     public JSONObject GetChannelByDateInterval(String channel, Date startDate, Date endDate) {
         return GetChannelByDateInterval(channel, DateHelper.getDateString(startDate), DateHelper.getDateString(endDate));
     }
+
     public JSONObject GetChannelByDateInterval(String channel, String startDate, String endDate) {
-        String action = BASEURL + "GetChannelByDateIntervalJSON";
+        String action = ProgramacaoTV.getAppContext().getResources().getString(R.string.sapo_base_rul) + "GetChannelByDateIntervalJSON";
         action += "?";
         action += "channelSigla=" + channel;
         action += "&";
@@ -138,24 +122,25 @@ public class SapoEPGHelper {
     public JSONObject GetProgramList(String channelInitials) {
         return GetProgramList(channelInitials, false);
     }
+
     public JSONObject GetProgramList(String channelInitials, boolean forceUpdate) {
         Date lastUpdateDate = mCache.getUpdateDate(channelInitials);
 
         Calendar updateThresholdDate = Calendar.getInstance();
-        updateThresholdDate.add(Calendar.DAY_OF_MONTH, -updateChannelListAge);
+        updateThresholdDate.add(Calendar.DAY_OF_MONTH, -ProgramacaoTV.getAppContext().getResources().getInteger(R.integer.update_if_older_then));
 
         Calendar updateStart = Calendar.getInstance();
-        updateStart.add(Calendar.DAY_OF_MONTH, -PROGRAMPASTDAYS);
+        updateStart.add(Calendar.DAY_OF_MONTH, -ProgramacaoTV.getAppContext().getResources().getInteger(R.integer.days_to_download_in_the_past));
 
         Calendar updateEnd = Calendar.getInstance();
-        updateEnd.add(Calendar.DAY_OF_MONTH, PROGRAMFUTUREDAYS);
+        updateEnd.add(Calendar.DAY_OF_MONTH, ProgramacaoTV.getAppContext().getResources().getInteger(R.integer.days_to_download_in_the_future));
 
         // Last update was before the time threshold for updating, OR forceUpdate is true
         if ((lastUpdateDate.getTime() - updateThresholdDate.getTime().getTime() < 0) || forceUpdate) {
-            Log.d("SAPOEPGHELPER", "Channel: "+ channelInitials+
-                    ", Date of last update: " + DateHelper.getDateString(lastUpdateDate) +
-                    ", Update threshold date: " +DateHelper.getDateString(updateThresholdDate.getTime()) +
-                    " (" + updateChannelListAge + " days ago.)");
+//            Log.d("SAPOEPGHELPER", "Channel: "+ channelInitials+
+//                    ", Date of last update: " + DateHelper.getDateString(lastUpdateDate) +
+//                    ", Update threshold date: " +DateHelper.getDateString(updateThresholdDate.getTime()) +
+//                    " (" + updateChannelListAge + " days ago.)");
 
             JSONObject newProgramList = GetChannelByDateInterval(channelInitials, updateStart.getTime(), updateEnd.getTime());
             writeToFile(newProgramList.toString(), mContext, channelInitials);
@@ -164,10 +149,9 @@ public class SapoEPGHelper {
         }
         else
         {
-            Log.d("SAPOEPGHELPER", "No need to update EpisodeEntry List for: "+ channelInitials);
+//            Log.d("SAPOEPGHELPER", "No need to update EpisodeEntry List for: "+ channelInitials);
             try {
-                JSONObject channelList = new JSONObject(readFromFile(mContext, channelInitials));
-                return channelList;
+                return new JSONObject(readFromFile(mContext, channelInitials));
             }
             catch (JSONException ex)
             {
@@ -181,10 +165,11 @@ public class SapoEPGHelper {
     public void InitializeCaches(String channelInitials) {
         InitializeCaches(channelInitials, false);
     }
+
     public void InitializeCaches(String channelInitials, boolean forceUpdate) {
 //        List<EpisodeEntry> ret = new ArrayList<EpisodeEntry>();
         JSONObject jsonlist = GetProgramList(channelInitials, forceUpdate);
-        Log.d("SAPOEPGHELPER", "JSON LIST" + jsonlist.toString());
+//        Log.d("SAPOEPGHELPER", "JSON LIST" + jsonlist.toString());
         try {
             JSONObject response = jsonlist.getJSONObject("GetChannelByDateIntervalResponse");
             JSONObject result = response.getJSONObject("GetChannelByDateIntervalResult");
@@ -219,26 +204,36 @@ public class SapoEPGHelper {
 //            return ret;
 
         } catch (JSONException ex) {
-            //todo: handle you shiiiiit
             Log.e("SAPOEPGHELPER", "InitializeCaches Cannot get JSON object: " +ex.toString() );
 //            return null;
         }
+    }
+
+    public List<ProgramEpisode> GetProgramEpisodesByChannel(String channel) {
+        List<ProgramEpisode> ret = new ArrayList<>();
+        InitializeCaches(channel);
+        List<EpisodeEntry> listtvc = GetEpisodeCache().getEpisodesOfChannel("TVC1");
+        for (int i = 0; i < listtvc.size(); i++) {
+            EpisodeEntry e = listtvc.get(i);
+            ProgramEntry p = GetProgramCache().GetProgram(e.Program);
+            ret.add(new ProgramEpisode(p, e));
+        }
+        return ret;
     }
 
     public ProgramDbHelper GetProgramCache()
     {
         return mProgramCache;
     }
+
     public EpisodeDbHelper GetEpisodeCache()
     {
         return mEpisodeCache;
     }
 
-
     private String GetJSONString(JSONObject obj, String name) {
         try {
-            String ret = obj.getString(name);
-            return ret;
+            return obj.getString(name);
         }
         catch (JSONException ex)
         {
@@ -246,9 +241,10 @@ public class SapoEPGHelper {
             return "";
         }
     }
+
     private void writeToFile(String data,Context context, String filename) {
         try {
-            Log.d("SAPOEPGHELPER", "Trying to write to file: "+ filename);
+//            Log.d("SAPOEPGHELPER", "Trying to write to file: "+ filename);
             OutputStreamWriter outputStreamWriter = new OutputStreamWriter(context.openFileOutput(filename, Context.MODE_PRIVATE));
             outputStreamWriter.write(data);
             outputStreamWriter.close();
@@ -257,10 +253,11 @@ public class SapoEPGHelper {
             Log.e("SAPOEPGHELPER", "File write failed: " + e.toString());
         }
     }
+
     private String readFromFile(Context context, String filename) {
 
         String ret = "";
-        Log.d("SAPOEPGHELPER", "Trying to read from file: "+ filename);
+//        Log.d("SAPOEPGHELPER", "Trying to read from file: "+ filename);
 
         try {
             InputStream inputStream = context.openFileInput(filename);
@@ -268,7 +265,7 @@ public class SapoEPGHelper {
             if ( inputStream != null ) {
                 InputStreamReader inputStreamReader = new InputStreamReader(inputStream);
                 BufferedReader bufferedReader = new BufferedReader(inputStreamReader);
-                String receiveString = "";
+                String receiveString;
                 StringBuilder stringBuilder = new StringBuilder();
 
                 while ( (receiveString = bufferedReader.readLine()) != null ) {
@@ -286,6 +283,26 @@ public class SapoEPGHelper {
         }
 
         return ret;
+    }
+
+    public class Channel {
+        String Sigla;
+        String ChannelName;
+
+        public Channel(String sigla, String name) {
+            Sigla = sigla;
+            ChannelName = name;
+        }
+    }
+
+    public class ProgramEpisode {
+        EpisodeEntry Episode;
+        ProgramEntry Program;
+
+        public ProgramEpisode(ProgramEntry p, EpisodeEntry e) {
+            this.Program = p;
+            this.Episode = e;
+        }
     }
 
 }

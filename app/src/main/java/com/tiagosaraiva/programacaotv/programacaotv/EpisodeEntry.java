@@ -1,27 +1,24 @@
 package com.tiagosaraiva.programacaotv.programacaotv;
 
-import android.util.Log;
-
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import java.util.Objects;
 
 /**
  * Created by tfsaraiva on 01/11/2016.
  */
 
-public class EpisodeEntry {
-    String Program;
-    String StartTime;
-    String EndTime;
-    String ProgramSeason;
-    String ProgramEpisode;
-    String Channel;
+class EpisodeEntry {
     static final String COLUMN_NAME_PROGRAM = "PROGRAM";
     static final String COLUMN_NAME_STARTDATE = "STARTDATE";
     static final String COLUMN_NAME_ENDDATE = "ENDDATE";
     static final String COLUMN_NAME_SEASON = "SEASON";
     static final String COLUMN_NAME_EPISODE = "EPISODE";
     static final String COLUMN_NAME_CHANNEL = "CHANNEL";
+    String Program;
+    String StartTime;
+    String EndTime;
+    String ProgramSeason;
+    String ProgramEpisode;
+    String Channel;
 
     public EpisodeEntry(String prog,
                         String starttime,
@@ -51,7 +48,7 @@ public class EpisodeEntry {
         processProgramName(prog);
     }
 
-    public void processProgramName(String programName)
+    private void processProgramName(String programName)
     {
         MeoName meoname =new MeoName(programName);
         Program = meoname.Title;
@@ -65,10 +62,10 @@ public class EpisodeEntry {
     @Override
     public String toString() {
         // return super.toString();
-        String ret = Program.toString() + ": Start time: " + StartTime + ", End Time: " + EndTime;
-        if ((ProgramSeason != null) && (ProgramSeason != ""))
+        String ret = Program + ": Start time: " + StartTime + ", End Time: " + EndTime;
+        if ((ProgramSeason != null) && (!Objects.equals(ProgramSeason, "")))
             ret += ", Season: " + ProgramSeason;
-        if ((ProgramEpisode != null) && (ProgramEpisode != ""))
+        if ((ProgramEpisode != null) && (!Objects.equals(ProgramEpisode, "")))
             ret += ", Episode: " +ProgramEpisode;
         return ret;
     }

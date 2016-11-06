@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <integer name="days_to_download_in_the_future">15</integer>
+    <integer name="days_to_download_in_the_past">7</integer>
+    <integer name="update_if_older_then">5</integer>
+</resources>

@@ -7,7 +7,7 @@ import java.util.regex.Pattern;
  * Created by tfsar on 05/11/2016.
  */
 
-public class MeoName {
+class MeoName {
     public String Episode;
     public String Season;
     public String Title;
@@ -41,7 +41,6 @@ public class MeoName {
             ret = episode_match.replaceAll("");
 
             // Now create matcher object.
-
             Matcher replaceeppart_match = Pattern.compile(ProgramacaoTV.getAppContext().getResources()
                                                 .getString(R.string.episode_match_remove_regex_pattern)).matcher(episodepart);
             if (replaceeppart_match.find()) {

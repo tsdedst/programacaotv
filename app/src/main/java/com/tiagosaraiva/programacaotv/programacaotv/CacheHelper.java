@@ -1,43 +1,36 @@
 package com.tiagosaraiva.programacaotv.programacaotv;
 
 import android.content.ContentValues;
+import android.content.Context;
 import android.database.Cursor;
 import android.database.CursorIndexOutOfBoundsException;
-import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
-import android.os.Bundle;
-import android.content.Context;
 import android.util.Log;
 
-import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.Locale;
+import java.util.Objects;
 
 /**
- * Created by tfsar on 28/10/2016.
+ * ProgramacaoTV
+ *
+ *
+ * Created by tfsar on Novembro/2016.
+ *
  */
 
-public class CacheHelper extends SQLiteOpenHelper {
+class CacheHelper extends SQLiteOpenHelper {
     private static final int DATABASE_VERSION = 2;
     private static final String DATABASE_NAME = "cache";
     private static final String TEXT_TYPE = " TEXT";
     private static final String DATETIME_TYPE = " DATETIME";
     private static final String COMMA_SEP = ",";
     private static final String TABLE_NAME = "cache";
-    /* Inner class that defines the table contents */
-    public static class CacheEntry  {
-
-        static final String COLUMN_NAME_CHANNEL = "CHANNEL";
-        static final String COLUMN_NAME_DATE = "DATE";
-    }
-
-    static final String SQL_CREATE_TABLE =
+    private static final String SQL_CREATE_TABLE =
             "CREATE TABLE " + TABLE_NAME + " (" +
                     CacheEntry.COLUMN_NAME_CHANNEL + TEXT_TYPE + COMMA_SEP +
                     CacheEntry.COLUMN_NAME_DATE + DATETIME_TYPE + " DEFAULT CURRENT_TIMESTAMP )";
-
-    static final String SQL_DELETE_ENTRIES =
+    private static final String SQL_DELETE_ENTRIES =
             "DROP TABLE IF EXISTS " + TABLE_NAME;
 
     CacheHelper(Context context) {
@@ -62,15 +55,15 @@ public class CacheHelper extends SQLiteOpenHelper {
         onUpgrade(db, oldVersion, newVersion);
     }
 
-    public boolean cacheAddEntry(String channel, String date)
+    private boolean cacheAddEntry(String channel, String date)
     {
         SQLiteDatabase writableCacheDatabase = this.getWritableDatabase();
 
-        if (date == "")
+        if (Objects.equals(date, ""))
         {
             date = DateHelper.getCurrentDateTimeString();
         }
-        Log.d("CACHEHELPER", "cacheAddEntry: Add cache entry, channel: "+channel+", date: "+ date);
+//        Log.d("CACHEHELPER", "cacheAddEntry: Add cache entry, channel: "+channel+", date: "+ date);
 
         // Create a new map of values, where column names are the keys
         ContentValues values = new ContentValues();
@@ -81,15 +74,13 @@ public class CacheHelper extends SQLiteOpenHelper {
         writableCacheDatabase.close();
         String verify = DateHelper.getDateTimeString(getUpdateDate(channel));
 
-        return (date == verify);
+        return (Objects.equals(date, verify));
     }
-
 
     public boolean cacheAddEntry(String channel)
     {
         return cacheAddEntry(channel, "");
     }
-
 
     public void resetCache()
     {
@@ -132,8 +123,15 @@ public class CacheHelper extends SQLiteOpenHelper {
             } catch (CursorIndexOutOfBoundsException ex) {
                 Log.d("CACHEHELPER", "No Channel List present (first run?)");
             }
-            Log.d("CACHEHELPER", "getUpdateDate: channel: " + channel + ", date: " + date);
+//            Log.d("CACHEHELPER", "getUpdateDate: channel: " + channel + ", date: " + date);
         }
         return DateHelper.getConvertedDateTime(date);
+    }
+
+    /* Inner class that defines the table contents */
+    public static class CacheEntry {
+
+        static final String COLUMN_NAME_CHANNEL = "CHANNEL";
+        static final String COLUMN_NAME_DATE = "DATE";
     }
 }

@@ -23,11 +23,7 @@ public class ProgramDbHelper extends SQLiteOpenHelper implements InfoCompleteLis
     private static final String TEXT_TYPE = " TEXT";
     private static final String COMMA_SEP = ", ";
     private static final String TABLE_NAME = "programinfo";
-    /* Inner class that defines the table contents */
-    private List<String> AddedShows;
-    private List<String> AddingShows;
-
-    static final String SQL_CREATE_TABLE =
+    private static final String SQL_CREATE_TABLE =
             "CREATE TABLE " + TABLE_NAME + " (" + "id INTEGER PRIMARY KEY, " +
                     ProgramEntry.COLUMN_NAME_PROGRAM +TEXT_TYPE + " unique" + COMMA_SEP +
                     ProgramEntry.COLUMN_NAME_CHANNEL + TEXT_TYPE + COMMA_SEP +
@@ -59,18 +55,25 @@ public class ProgramDbHelper extends SQLiteOpenHelper implements InfoCompleteLis
                     ProgramEntry.COLUMN_NAME_TMDB_POPULARITY + TEXT_TYPE + COMMA_SEP +
                     ProgramEntry.COLUMN_NAME_TVDB_BANNER + TEXT_TYPE +
                     " )";
-
-    static final String SQL_DELETE_ENTRIES =
+    private static final String SQL_DELETE_ENTRIES =
             "DROP TABLE IF EXISTS " + TABLE_NAME;
+    /* Inner class that defines the table contents */
+    private List<String> AddingShows;
 
+
+    ProgramDbHelper(Context context) {
+        super(context, DATABASE_NAME, null, DATABASE_VERSION);
+        AddingShows = new ArrayList<>();
+
+    }
 
     private synchronized boolean isShowBeingAdded(String name)
     {
-        boolean ret = AddingShows.contains(name.toLowerCase());
-//        String response = ret?"yes": "nope";
+        //        String response = ret?"yes": "nope";
 //        Log.d("DBHELPER", "is show '"+name.toLowerCase()+"' being added? " + response);
-        return ret;
+        return AddingShows.contains(name.toLowerCase());
     }
+
     private synchronized void showWasAdded(String name)
     {
         if (isShowBeingAdded(name.toLowerCase()))
@@ -85,6 +88,7 @@ public class ProgramDbHelper extends SQLiteOpenHelper implements InfoCompleteLis
 //            Log.d("DBHELPER", "showWasAdded: show '"+name.toLowerCase()+"' is already not being added. did something go wrong?");
         this.notifyAll();
     }
+
     private synchronized void showIsBeingAdded(String name)
     {
         if (!isShowBeingAdded(name.toLowerCase()))
@@ -96,13 +100,6 @@ public class ProgramDbHelper extends SQLiteOpenHelper implements InfoCompleteLis
 //        else
 //            Log.d("DBHELPER", " showIsBeingAdded: show '"+name.toLowerCase()+"' is already being added. did something go wrong?");
         this.notifyAll();
-    }
-
-    ProgramDbHelper(Context context) {
-        super(context, DATABASE_NAME, null, DATABASE_VERSION);
-        AddedShows = new ArrayList<>();
-        AddingShows = new ArrayList<>();
-
     }
 
     @Override
@@ -142,7 +139,7 @@ public class ProgramDbHelper extends SQLiteOpenHelper implements InfoCompleteLis
 
 
     public void programAddtoDB(ProgramEntry program) {
-        Log.d("PROGRAMDBHELPER", "programAddtoDB: Add cache entry, program: " + program.ProgramName + ", imdb rating: " + program.IMDBImdbrating + ", desc: " + program.ShortMeoDesc);
+//        Log.d("PROGRAMDBHELPER", "programAddtoDB: Add cache entry, program: " + program.ProgramName + ", imdb rating: " + program.IMDBImdbrating + ", desc: " + program.ShortMeoDesc);
 
         // Create a new map of values, where column names are the keys
         ContentValues values = new ContentValues();
@@ -184,7 +181,7 @@ public class ProgramDbHelper extends SQLiteOpenHelper implements InfoCompleteLis
     }
 
     public void resetDB() {
-        Log.d("PROGRAMDBHELPER", "resetCache");
+//        Log.d("PROGRAMDBHELPER", "resetCache");
         SQLiteDatabase writableCacheDatabase = this.getWritableDatabase();
         // delete all entries
         writableCacheDatabase.execSQL(ProgramDbHelper.SQL_DELETE_ENTRIES);
@@ -267,15 +264,13 @@ public class ProgramDbHelper extends SQLiteOpenHelper implements InfoCompleteLis
                         c.getString(19), c.getString(20), c.getString(21), c.getString(22), c.getString(23),
                         c.getString(24), c.getString(25), c.getString(26), c.getString(27), c.getString(28));
 
-                Log.d("PROGRAMDBHELPER", "getProgram: title: " + ret.ProgramName + ", channel: " + ret.ChannelInitials);
+//                Log.d("PROGRAMDBHELPER", "getProgram: title: " + ret.ProgramName + ", channel: " + ret.ChannelInitials);
             } catch (CursorIndexOutOfBoundsException ex) {
                 Log.e("PROGRAMDBHELPER", "getProgram failed to get program '" + programname + "', maybe it's not in the database yet");
             }
             if (!c.isClosed()) c.close();
             return ret;
-
         }
-        if (c != null && !c.isClosed()) c.close();
         return null;
     }
 
@@ -318,19 +313,16 @@ public class ProgramDbHelper extends SQLiteOpenHelper implements InfoCompleteLis
             try {
                 c.moveToFirst();
                 String infocomplete = "";
-                String title = "";
+                String title;
                 try {
                     title = c.getString(0);
                 } catch (CursorIndexOutOfBoundsException ex) {
-                    Log.d("PROGRAMDBHELPER", "error in reading Title from DB for: '" + programname + "', maybe it's not in the Database.");
+                    //everything is OK, program is not in DB
+//                    Log.d("PROGRAMDBHELPER", "error in reading Title from DB for: '" + programname + "', maybe it's not in the Database.");
                     if (!c.isClosed()) c.close();
                     return false;
                 }
-                if (title != null && title.compareTo(programname) == 0) {
-                    Log.d("PROGRAMDBHELPER", "program '" + programname + "' is in database");
-                    return true;
-
-
+                //                    Log.d("PROGRAMDBHELPER", "program '" + programname + "' is in database");
 //                    try {
 //                        infocomplete = c.getString(1);
 //                    } catch (CursorIndexOutOfBoundsException ex) {
@@ -350,35 +342,33 @@ public class ProgramDbHelper extends SQLiteOpenHelper implements InfoCompleteLis
 //                        Log.d("PROGRAMDBHELPER", "program is in database but invalid");
 //                        return false;
 //                    }
-                }
-                else return false;
+                return title != null && title.compareTo(programname) == 0;
             } catch (Exception ex) {
                 Log.e("PROGRAMDBHELPER", "IsInDB exception: "+ ex.toString());
                 return false;
             }
         }
         Log.d("PROGRAMDBHELPER", "Program '"+programname+"' is not in database");
-        if (c != null && !c.isClosed()) c.close();
         return false;
     }
 
     @Override
     public void allInfoDownloadCompleteCallback(ProgramEntry program, String result) {
-        Log.d("PROGRAMDBHELPER", "infoDownloadCompleteCallback: Called back with message: " + result);
+//        Log.d("PROGRAMDBHELPER", "infoDownloadCompleteCallback: Called back with message: " + result);
         showIsBeingAdded(program.ProgramName);
         programAddtoDB(program);
         showWasAdded(program.ProgramName);
     }
     @Override
     public void basicInfoDownloadCompleteCallback(ProgramEntry program, String result) {
-        Log.d("PROGRAMDBHELPER", "basicInfoDownloadCompleteCallback: Called back with message: " + result);
+//        Log.d("PROGRAMDBHELPER", "basicInfoDownloadCompleteCallback: Called back with message: " + result);
         showIsBeingAdded(program.ProgramName);
         programAddtoDB(program);
         showWasAdded(program.ProgramName);
     }
     @Override
     public void imdbInfoDownloadCompleteCallback(ProgramEntry program, String result) {
-        Log.d("PROGRAMDBHELPER", "imdbInfoDownloadCompleteCallback: Called back with message: " + result);
+//        Log.d("PROGRAMDBHELPER", "imdbInfoDownloadCompleteCallback: Called back with message: " + result);
         showIsBeingAdded(program.ProgramName);
         programAddtoDB(program);
         showWasAdded(program.ProgramName);
@@ -386,7 +376,7 @@ public class ProgramDbHelper extends SQLiteOpenHelper implements InfoCompleteLis
 
     @Override
     public void imagesDownloadCompleteCallback(ProgramEntry program, String result) {
-        Log.d("PROGRAMDBHELPER", "imagesDownloadCompleteCallback: Called back with message: " + result);
+//        Log.d("PROGRAMDBHELPER", "imagesDownloadCompleteCallback: Called back with message: " + result);
         showIsBeingAdded(program.ProgramName);
         programAddtoDB(program);
         showWasAdded(program.ProgramName);
@@ -394,7 +384,7 @@ public class ProgramDbHelper extends SQLiteOpenHelper implements InfoCompleteLis
 
     @Override
     public void infoDownloadFailedCallback(ProgramEntry program, String result) {
-        Log.d("PROGRAMDBHELPER", "infoDownloadFailedCallback: Called back with message: " + result);
+//        Log.d("PROGRAMDBHELPER", "infoDownloadFailedCallback: Called back with message: " + result);
         showIsBeingAdded(program.ProgramName);
         programAddtoDB(program);
         showWasAdded(program.ProgramName);
@@ -402,7 +392,7 @@ public class ProgramDbHelper extends SQLiteOpenHelper implements InfoCompleteLis
 
     @Override
     public void imagesDownloadFailedCallback(ProgramEntry program, String result) {
-        Log.d("PROGRAMDBHELPER", "imagesDownloadFailedCallback: Called back with message: " + result);
+//        Log.d("PROGRAMDBHELPER", "imagesDownloadFailedCallback: Called back with message: " + result);
         showIsBeingAdded(program.ProgramName);
         programAddtoDB(program);
         showWasAdded(program.ProgramName);
