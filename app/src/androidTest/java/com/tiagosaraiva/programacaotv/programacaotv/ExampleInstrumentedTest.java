@@ -34,7 +34,7 @@ public class ExampleInstrumentedTest {
         // Context of the app under test.
         Context appContext = InstrumentationRegistry.getTargetContext();
 
-        CacheHelper c = new CacheHelper(appContext);
+        ChannelDBHelper c = new ChannelDBHelper(appContext);
 
 //        Log.d("TEST 1", "Test that initial dates are UNIX Epoch");
         String rtpUpdateDate = DateHelper.getDateTimeString(c.getUpdateDate("RTP"));
@@ -66,7 +66,7 @@ public class ExampleInstrumentedTest {
 
         Log.d("TEST 4", "Json object");
         SapoEPGHelper s = new SapoEPGHelper(appContext);
-        JSONObject hi = s.GetChannelByDateInterval("RTP1","2016-10-30","2016-11-04");
+        JSONObject hi = s.GetChannelProgramJSONListByDateInterval("RTP1","2016-10-30","2016-11-04");
 
         if (hi != null ) Log.d("TEST", hi.toString());
     }
@@ -83,7 +83,7 @@ public class ExampleInstrumentedTest {
 //        Log.d("TEST", "Channel List: " + s.GetChannelList().toString());
 //
 //        Log.d("TEST 6", "Json object PROGRAM LIST");
-//        Log.d("TEST", "PROGRAM List for SIC: " + s.GetProgramList("SIC").toString());
+//        Log.d("TEST", "PROGRAM List for SIC: " + s.RetrieveChannelGuide("SIC").toString());
 //
 //
 //

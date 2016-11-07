@@ -78,6 +78,7 @@ public class EpisodeDbHelper extends SQLiteOpenHelper {
         }
 
     }
+
     public List<EpisodeEntry> getEpisodes(ProgramEntry program)
     {
         MeoName meoname = new MeoName(program.ProgramName);

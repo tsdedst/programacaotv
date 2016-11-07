@@ -21,11 +21,12 @@ import android.widget.ListView;
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener, MainActivityListener {
 
-    SapoEPGHelper sapohelper;
+    ChannelListGetter mChannelList;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        sapohelper = new SapoEPGHelper(getApplicationContext());
+        mChannelList = new ChannelListGetter(this);
+        mChannelList.execute();
 
         setContentView(R.layout.activity_main);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
@@ -42,9 +43,8 @@ public class MainActivity extends AppCompatActivity
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
 
-        ListView  channelListLayout = (ListView) findViewById(R.id.navigation_drawer_list);
-        ListAdapter channelListAdapter = new ArrayAdapter<String>(this, R.layout.simplerow, sapohelper.GetChannelStringList());
-        channelListLayout.setAdapter(channelListAdapter);
+        // hopefully this is called automagically:
+        // populateListview();
 
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
                 this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
@@ -114,7 +114,9 @@ public class MainActivity extends AppCompatActivity
     }
 
     @Override
-    public void populateListview(String result) {
-
+    public void populateListview(String res) {
+        ListView  channelListLayout = (ListView) findViewById(R.id.navigation_drawer_list);
+        ListAdapter channelListAdapter = new ArrayAdapter<String>(this, R.layout.simplerow, mChannelList.GetChannelStringList());
+        channelListLayout.setAdapter(channelListAdapter);
     }
 }
