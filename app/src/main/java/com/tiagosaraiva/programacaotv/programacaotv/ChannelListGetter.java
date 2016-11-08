@@ -37,11 +37,17 @@ public class ChannelListGetter extends AsyncTask<Void, Void, Void>{
     public List<String> GetChannelStringList()
     {
         List<String> ret = new ArrayList<>();
-        for (int i =0; i < ChannelMap.size(); i++)
+        List<ChannelEntry> cl = GetCache().getChannelList();
+        for (int i =1; i < cl.size(); i++)
         {
-            ret.add(ChannelMap.get(i).ChannelName);
+            String name = cl.get(i).ChannelName;
+            ret.add(name);
         }
         return ret;
+    }
+    public ChannelEntry GetChannelFromId(int in)
+    {
+        return GetCache().getChannelList().get(in+1);
     }
 
     private JSONObject RetrieveChannelList()
@@ -60,10 +66,12 @@ public class ChannelListGetter extends AsyncTask<Void, Void, Void>{
         // Last update was before the time threshold for updating, OR forceUpdate is true
         if ((lastUpdateDate.getTime() - updateThresholdDate.getTime().getTime() < 0) || forceUpdate)
         {
+            Log.d("ChannelListGetter", "Downloading list from the web");
             JSONObject newChannelList = DownloadJSONAsync.downloadFromURL(action);
             if (newChannelList != null) {
                 Utilities.writeToFile(newChannelList.toString(), mContext, CHANNELLISTNAME);
                 mCache.cacheAddEntry(0, CHANNELLISTNAME, CHANNELLISTNAME, DateHelper.getCurrentDateTime());
+                Log.d("ChannelListGetter", "Done downloading list from the web");
                 return newChannelList;
             }
             else
@@ -71,8 +79,12 @@ public class ChannelListGetter extends AsyncTask<Void, Void, Void>{
         }
         else
         {
+            Log.d("ChannelListGetter", "Reading list from cached file");
             try {
-                return new JSONObject(Utilities.readFromFile(mContext, CHANNELLISTNAME));
+                String file = Utilities.readFromFile(mContext, CHANNELLISTNAME);
+                JSONObject jo = new JSONObject(file);
+                Log.d("ChannelListGetter", "Done reading list from cached file");
+                return jo;
             }
             catch (JSONException ex)
             {
@@ -81,8 +93,8 @@ public class ChannelListGetter extends AsyncTask<Void, Void, Void>{
             }
         }
     }
-    private Date getLastUpdateDate()
-    {
+
+    private Date getLastUpdateDate() {
         Date ret = new Date(0);
         ChannelEntry list = mCache.getChannelEntryFromInitials(CHANNELLISTNAME);
         if (list != null)
@@ -106,28 +118,28 @@ public class ChannelListGetter extends AsyncTask<Void, Void, Void>{
                 JSONObject channelresponse = jsonlist.getJSONObject("GetChannelListResponse");
                 JSONObject channelresult = channelresponse.getJSONObject("GetChannelListResult");
                 JSONArray channelList = channelresult.getJSONArray("Channel");
-                for(int i = 1; i <= channelList.length(); i++){
+                for(int i = 0; i < channelList.length(); i++){
                     String channelName = channelList.getJSONObject(i).getString("Name");
                     String channelInitials = channelList.getJSONObject(i).getString("Sigla");
-                    ChannelEntry entry = new ChannelEntry(i, channelInitials, channelName, DateHelper.getCurrentDateTime());
+                    ChannelEntry entry = new ChannelEntry(i+1, channelName, channelInitials, DateHelper.getCurrentDateTime());
                     mCache.cacheAddEntry(entry);
                 }
             } catch (JSONException ex) {
-                Log.e("ChannelListGetter", "GetChannelArrayList Cannot get JSON object" );
+                Log.e("ChannelListGetter", "GetChannelArrayList Cannot get JSON object: " +ex.toString());
             }
         }
     }
 
-    private void RefreshChannelMap()
+    public ChannelDBHelper GetCache()
     {
-        this.ChannelMap = mCache.getChannelList();
+        return mCache;
     }
 
     @Override
     protected Void doInBackground(Void... params) {
         Log.d("ChannelListGetter","starting background activities");
         StoreChannelListIfNecessary();
-        RefreshChannelMap();
+        Log.d("ChannelListGetter","finished background activities");
         return null;
     }
 
@@ -139,7 +151,7 @@ public class ChannelListGetter extends AsyncTask<Void, Void, Void>{
     @Override
     protected void onPostExecute(Void aVoid) {
         super.onPostExecute(aVoid);
-        Log.d("ChannelListGetter","finished getting channel list: " + GetChannelStringList().toString());
+        Log.d("ChannelListGetter","post execution of background activities");
         mMainActivity.populateListview("ok");
     }
 

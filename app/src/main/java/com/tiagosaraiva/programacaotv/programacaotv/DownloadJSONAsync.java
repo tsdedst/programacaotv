@@ -17,13 +17,17 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Objects;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 /**
  * Created by tfsar on 31/10/2016.
  */
 
-class DownloadJSONAsync implements Runnable {
+class DownloadJSONAsync implements Callable<String> {
 
     private HttpURLConnection urlConnection;
     //private Context mContext;
@@ -31,7 +35,6 @@ class DownloadJSONAsync implements Runnable {
     //private TaskListener  mListener;
     private JSONObject mJsonLogin = null;
     private String mToken = null;
-    private String mReturn = null;
     private URL mInput = null;
 
     private DownloadJSONAsync(URL input) {
@@ -56,47 +59,44 @@ class DownloadJSONAsync implements Runnable {
     private static JSONObject downloadFromURL(String url, JSONObject jsonlogin) {
         return downloadFromURL(url, jsonlogin, null);
     }
-    private static synchronized JSONObject downloadFromURL(String url, JSONObject jsonlogin, String token) {
+    private static JSONObject downloadFromURL(String url, JSONObject jsonlogin, String token) {
+        URL urlAction= null;
         try {
-            URL urlAction = new URL(url);
-            //Log.d("DOWNLOADJSON", "downloadFromDaInterwebz: string: " + url);
-            DownloadJSONAsync j = new DownloadJSONAsync(urlAction, jsonlogin, token);
-
-            try{
-                //j.execute(urlAction);
-                Thread t = new Thread(j);
-                t.start();
-                while (t.getState() != Thread.State.TERMINATED);
-                String result = j.mReturn;
-                if (result != null && !Objects.equals(result, "")) {
-                    try {
-                        return new JSONObject(result);
-                    } catch (JSONException ex) {
-                        Log.e("DOWNLOADJSON", "downloadFromURL JSONException, result from url: '" + url + "' is: '" + result + "'. Error: " + ex.toString());
-                        return null;
-                    }
-                }
-                else
-                {
-                    Log.d("DOWNLOADJSON", "downloadFromURL empty result from url: '" + url + "' :(");
-                    return null;
-                }
-            } catch(IllegalThreadStateException ex)
-            {
-                Log.e("DOWNLOADJSON", "downloadFromURL InterruptedException: "+ ex.toString());
-                return null;
-            }
-            //catch (ExecutionException ex)
-            //{
-            //    Log.e("DOWNLOADJSON", "downloadFromURL ExecutionException: "+ ex.toString());
-            //    return null;
-            //}
+            urlAction = new URL(url);
         }
         catch (MalformedURLException ex)
         {
             Log.e("DOWNLOADJSON", "downloadFromURL MalformedURLException: " + url + ", exception: " + ex.toString());
             return null;
         }
+        JSONObject ret = new JSONObject();
+        if (urlAction != null) {
+            DownloadJSONAsync j = new DownloadJSONAsync(urlAction, jsonlogin, token);
+
+            String result = null;
+            ExecutorService executor = Executors.newFixedThreadPool(1);
+            final Future<String> thread_result = executor.submit(j);
+
+            try {
+                result = thread_result.get(); // get is blocking, waiting for execution to complete,
+                // so don't use this on main thread
+            } catch (InterruptedException ex) {
+                Log.e("DOWNLOADJSON", "InterruptedException JSONException, result from url: '" + url + "' is: '" + result + "'. Error: " + ex.toString());
+            } catch (ExecutionException ex) {
+                Log.e("DOWNLOADJSON", "ExecutionException JSONException, result from url: '" + url + "' is: '" + result + "'. Error: " + ex.toString());
+            }
+
+            if (result != null && !Objects.equals(result, "")) {
+                try {
+                    ret = new JSONObject(result);
+                } catch (JSONException ex) {
+                    Log.e("DOWNLOADJSON", "downloadFromURL JSONException, result from url: '" + url + "' is: '" + result + "'. Error: " + ex.toString());
+                }
+            } else {
+                Log.e("DOWNLOADJSON", "downloadFromURL empty result from url: '" + url + "' :(");
+            }
+        }
+        return ret;
     }
     private static String getNewTVDBToken(String apikey) {
         SharedPreferences shp = PreferenceManager.getDefaultSharedPreferences(ProgramacaoTV.getAppContext());
@@ -175,10 +175,18 @@ class DownloadJSONAsync implements Runnable {
 
             //try{
                 //String result = j.get();
-            Thread t = new Thread(j);
-            t.start();
-            while (t.getState() != Thread.State.TERMINATED);
-            String result = j.mReturn;
+            String result = null;
+            ExecutorService executor = Executors.newFixedThreadPool(1);
+            final Future<String> thread_result = executor.submit(j);
+            try {
+                result = thread_result.get(); // get is blocking, waiting for execution to complete,
+                // so don't use this on main thread
+            } catch (InterruptedException ex) {
+
+            } catch (ExecutionException ex) {
+
+            }
+
             if (result != null && !Objects.equals(result, "")) {
                 webpage = result;
             }
@@ -217,8 +225,9 @@ class DownloadJSONAsync implements Runnable {
         return result;
     }
 
+
     @Override
-    public void run() {
+    public String call() throws Exception {
         StringBuilder result = new StringBuilder();
 
         try {
@@ -263,8 +272,6 @@ class DownloadJSONAsync implements Runnable {
             urlConnection.disconnect();
         }
 
-        //Log.d("DOWNLOADJSON", "doInBackground, final string: " + result.toString());
-        mReturn = result.toString();
+        return result.toString();
     }
-
 }

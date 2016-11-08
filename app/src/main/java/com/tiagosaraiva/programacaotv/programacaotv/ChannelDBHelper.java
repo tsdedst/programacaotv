@@ -83,7 +83,11 @@ class ChannelDBHelper extends SQLiteOpenHelper {
         values.put(COLUMN_NAME_SIGLA, initials);
         values.put(COLUMN_NAME_DATE, DateHelper.getDateTimeString(date));
         // insert value
-        writableCacheDatabase.update(TABLE_NAME, values, COLUMN_NAME_CHANNEL_NUMBER+"="+Integer.toString(num), null);
+        int rowsaffected = writableCacheDatabase.update(TABLE_NAME, values, COLUMN_NAME_CHANNEL_NUMBER+"="+Integer.toString(num), null);
+        if (rowsaffected < 1)
+        {
+            writableCacheDatabase.replace(TABLE_NAME, null, values);
+        }
         //writableCacheDatabase.close();
     }
 

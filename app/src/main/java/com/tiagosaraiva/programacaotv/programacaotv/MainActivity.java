@@ -1,5 +1,6 @@
 package com.tiagosaraiva.programacaotv.programacaotv;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
@@ -13,10 +14,13 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.LinearLayout;
 import android.widget.ListAdapter;
 import android.widget.ListView;
+
+import static android.provider.AlarmClock.EXTRA_MESSAGE;
 
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener, MainActivityListener {
@@ -116,7 +120,19 @@ public class MainActivity extends AppCompatActivity
     @Override
     public void populateListview(String res) {
         ListView  channelListLayout = (ListView) findViewById(R.id.navigation_drawer_list);
+        // TODO: This needs to be better looking and faster
         ListAdapter channelListAdapter = new ArrayAdapter<String>(this, R.layout.simplerow, mChannelList.GetChannelStringList());
         channelListLayout.setAdapter(channelListAdapter);
+        channelListLayout.setOnItemClickListener(new ListView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position,
+                                    long id) {
+//                Intent intent = new Intent(MainActivity.this, SendMessage.class);
+                String message = "abc";
+                Log.d("MMainActivity","Listview item clicked at pos.: " + position + ", which equates to: " + mChannelList.GetChannelFromId(position).ChannelName);
+//                intent.putExtra(EXTRA_MESSAGE, message);
+//                startActivity(intent);
+            }
+        });
     }
 }
