@@ -138,12 +138,9 @@ public class ChannelListGetter extends AsyncTask<Void, Void, Void>{
 
     @Override
     protected void onPostExecute(Void aVoid) {
-        Log.d("ChannelListGetter","no?");
-        Log.d("ChannelListGetter","finished getting channel list: " + GetChannelStringList().toString());
-        Log.d("ChannelListGetter","calling back to mainactivity");
-
-        mMainActivity.populateListview("ok");
         super.onPostExecute(aVoid);
+        Log.d("ChannelListGetter","finished getting channel list: " + GetChannelStringList().toString());
+        mMainActivity.populateListview("ok");
     }
 
     @Override

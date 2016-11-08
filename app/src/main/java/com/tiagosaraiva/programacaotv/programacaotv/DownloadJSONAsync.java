@@ -23,7 +23,7 @@ import java.util.concurrent.ExecutionException;
  * Created by tfsar on 31/10/2016.
  */
 
-class DownloadJSONAsync extends AsyncTask<URL, Void, String> {
+class DownloadJSONAsync implements Runnable {
 
     private HttpURLConnection urlConnection;
     //private Context mContext;
@@ -31,41 +31,43 @@ class DownloadJSONAsync extends AsyncTask<URL, Void, String> {
     //private TaskListener  mListener;
     private JSONObject mJsonLogin = null;
     private String mToken = null;
+    private String mReturn = null;
+    private URL mInput = null;
 
-    private DownloadJSONAsync() {
-
+    private DownloadJSONAsync(URL input) {
+        mInput = input;
     }
-
-    private DownloadJSONAsync(JSONObject jsonlogin, String token) {
+    private DownloadJSONAsync(URL input, JSONObject jsonlogin, String token) {
         this.mJsonLogin = jsonlogin;
         this.mToken = token;
-
+        mInput = input;
     }
-    public DownloadJSONAsync(JSONObject jsonlogin) {
+    private DownloadJSONAsync(URL input, JSONObject jsonlogin) {
         this.mJsonLogin = jsonlogin;
+        mInput = input;
     }
 
     public static JSONObject downloadFromURL(String url) {
         return downloadFromURL(url, null, null);
     }
-
     private static JSONObject downloadFromURL(String url, String token) {
         return downloadFromURL(url, null, token);
     }
-
     private static JSONObject downloadFromURL(String url, JSONObject jsonlogin) {
         return downloadFromURL(url, jsonlogin, null);
     }
-
-    private static JSONObject downloadFromURL(String url, JSONObject jsonlogin, String token) {
+    private static synchronized JSONObject downloadFromURL(String url, JSONObject jsonlogin, String token) {
         try {
             URL urlAction = new URL(url);
             //Log.d("DOWNLOADJSON", "downloadFromDaInterwebz: string: " + url);
-            DownloadJSONAsync j = new DownloadJSONAsync(jsonlogin, token);
+            DownloadJSONAsync j = new DownloadJSONAsync(urlAction, jsonlogin, token);
 
-            j.execute(urlAction);
             try{
-                String result = j.get();
+                //j.execute(urlAction);
+                Thread t = new Thread(j);
+                t.start();
+                while (t.getState() != Thread.State.TERMINATED);
+                String result = j.mReturn;
                 if (result != null && !Objects.equals(result, "")) {
                     try {
                         return new JSONObject(result);
@@ -79,15 +81,16 @@ class DownloadJSONAsync extends AsyncTask<URL, Void, String> {
                     Log.d("DOWNLOADJSON", "downloadFromURL empty result from url: '" + url + "' :(");
                     return null;
                 }
-            } catch(InterruptedException ex)
+            } catch(IllegalThreadStateException ex)
             {
                 Log.e("DOWNLOADJSON", "downloadFromURL InterruptedException: "+ ex.toString());
                 return null;
-            } catch (ExecutionException ex)
-            {
-                Log.e("DOWNLOADJSON", "downloadFromURL ExecutionException: "+ ex.toString());
-                return null;
             }
+            //catch (ExecutionException ex)
+            //{
+            //    Log.e("DOWNLOADJSON", "downloadFromURL ExecutionException: "+ ex.toString());
+            //    return null;
+            //}
         }
         catch (MalformedURLException ex)
         {
@@ -95,9 +98,7 @@ class DownloadJSONAsync extends AsyncTask<URL, Void, String> {
             return null;
         }
     }
-
-    private static String getNewTVDBToken(String apikey)
-    {
+    private static String getNewTVDBToken(String apikey) {
         SharedPreferences shp = PreferenceManager.getDefaultSharedPreferences(ProgramacaoTV.getAppContext());
         String token;
         try {
@@ -122,9 +123,7 @@ class DownloadJSONAsync extends AsyncTask<URL, Void, String> {
             return null;
         }
     }
-
-    public static JSONObject downloadFromURLWithToken(String apikey, String url)
-    {
+    public static JSONObject downloadFromURLWithToken(String apikey, String url) {
         //SharedPreferences shp = PreferenceManager.getDefaultSharedPreferences(ProgramacaoTV.getAppContext());
         SharedPreferences shp = PreferenceManager.getDefaultSharedPreferences(ProgramacaoTV.getAppContext());
         String token = shp.getString("TVDBToken", "");
@@ -155,9 +154,7 @@ class DownloadJSONAsync extends AsyncTask<URL, Void, String> {
         return ret;
 
     }
-
-    public static String parseIMDBid(String url)
-    {
+    public static String parseIMDBid(String url) {
         // for a web page that looks like the following:
         //<table class="findList">
         //<tr class="findResult odd"> <td class="primary_photo"> <a href="/title/tt1119646/?ref_=fn_al_tt_1" >
@@ -172,28 +169,35 @@ class DownloadJSONAsync extends AsyncTask<URL, Void, String> {
         String webpage;
         try {
             URL urlAction = new URL(url);
-            DownloadJSONAsync j = new DownloadJSONAsync();
+            DownloadJSONAsync j = new DownloadJSONAsync(urlAction);
 //            Log.d("DOWNLOADJSON", "parseIMDBid executing a new Asynch task on: '" + url);
-            j.execute(urlAction);
-            try{
-                String result = j.get();
-                if (result != null && !Objects.equals(result, "")) {
-                    webpage = result;
-                }
-                else
-                {
-                    Log.d("DOWNLOADJSON", "parseIMDBid empty restult from url: '" + url);
-                    return null;
-                }
-            } catch(InterruptedException ex)
+            //j.execute(urlAction);
+
+            //try{
+                //String result = j.get();
+            Thread t = new Thread(j);
+            t.start();
+            while (t.getState() != Thread.State.TERMINATED);
+            String result = j.mReturn;
+            if (result != null && !Objects.equals(result, "")) {
+                webpage = result;
+            }
+            else
             {
-                Log.e("DOWNLOADJSON", "parseIMDBid InterruptedException: "+ ex.toString());
-                return null;
-            } catch (ExecutionException ex)
-            {
-                Log.e("DOWNLOADJSON", "parseIMDBid ExecutionException: "+ ex.toString());
+                Log.d("DOWNLOADJSON", "parseIMDBid empty restult from url: '" + url);
                 return null;
             }
+            //}
+
+//            catch(InterruptedException ex)
+//            {
+//                Log.e("DOWNLOADJSON", "parseIMDBid InterruptedException: "+ ex.toString());
+//                return null;
+//            } catch (ExecutionException ex)
+//            {
+//                Log.e("DOWNLOADJSON", "parseIMDBid ExecutionException: "+ ex.toString());
+//                return null;
+//            }
         }
         catch (MalformedURLException ex)
         {
@@ -214,11 +218,11 @@ class DownloadJSONAsync extends AsyncTask<URL, Void, String> {
     }
 
     @Override
-    protected String doInBackground(URL... params) {
+    public void run() {
         StringBuilder result = new StringBuilder();
 
         try {
-            URL url = params[0];
+            URL url = mInput;
 //            Proxy proxy = new Proxy(Proxy.Type.HTTP, new InetSocketAddress("10.0.0.1", 8080));
 
             urlConnection = (HttpURLConnection) url.openConnection(/*proxy*/);
@@ -260,27 +264,7 @@ class DownloadJSONAsync extends AsyncTask<URL, Void, String> {
         }
 
         //Log.d("DOWNLOADJSON", "doInBackground, final string: " + result.toString());
-        return result.toString();
+        mReturn = result.toString();
     }
-
-    @Override
-    protected void onPreExecute() {
-        super.onPreExecute();
-        //Log.d("DOWNLOADJSON", "onPreExecute");
-    }
-
-    @Override
-    protected void onPostExecute(String s) {
-        super.onPostExecute(s);
-        //Log.d("DOWNLOADJSON", "onPostExecute");
-
-    }
-
-    @Override
-    protected void onProgressUpdate(Void... values) {
-        super.onProgressUpdate(values);
-        // Log.d("DOWNLOADJSON", "onProgressUpdate");
-    }
-
 
 }
