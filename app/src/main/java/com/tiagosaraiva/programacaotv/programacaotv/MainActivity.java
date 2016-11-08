@@ -1,6 +1,5 @@
 package com.tiagosaraiva.programacaotv.programacaotv;
 
-import android.content.Intent;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
@@ -16,11 +15,10 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
-import android.widget.LinearLayout;
+import android.widget.ImageView;
 import android.widget.ListAdapter;
 import android.widget.ListView;
-
-import static android.provider.AlarmClock.EXTRA_MESSAGE;
+import android.widget.TextView;
 
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener, MainActivityListener {
@@ -120,19 +118,32 @@ public class MainActivity extends AppCompatActivity
     @Override
     public void populateListview(String res) {
         ListView  channelListLayout = (ListView) findViewById(R.id.navigation_drawer_list);
+
+//        TextView channelNumberTextView = (TextView) findViewById(R.id.channel_number_textview);
+//        TextView channelNameTextView = (TextView) findViewById(R.id.channel_name_textview);
+//        ImageView channelFavoriteImageView = (ImageView) findViewById(R.id.channel_favorite_imageview);
+
         // TODO: This needs to be better looking and faster
-        ListAdapter channelListAdapter = new ArrayAdapter<String>(this, R.layout.simplerow, mChannelList.GetChannelStringList());
+//        ListAdapter channelListAdapter = new ArrayAdapter<String>(this, R.layout.channel_list_row_layout, mChannelList.GetChannelStringList());
+//        channelListLayout.setAdapter(channelListAdapter);
+//        channelListLayout.setOnItemClickListener(new ListView.OnItemClickListener() {
+//            @Override
+//            public void onItemClick(AdapterView<?> parent, View view, int position,
+//                                    long id) {
+////                Intent intent = new Intent(MainActivity.this, SendMessage.class);
+//                String message = "abc";
+//                Log.d("MMainActivity","Listview item clicked at pos.: " + position + ", which equates to: " + mChannelList.GetChannelFromId(position).ChannelName);
+////                intent.putExtra(EXTRA_MESSAGE, message);
+////                startActivity(intent);
+//            }
+//        });
+
+        ListAdapter channelListAdapter = new ChannelListAdapter(this, mChannelList.ChannelMap);
         channelListLayout.setAdapter(channelListAdapter);
-        channelListLayout.setOnItemClickListener(new ListView.OnItemClickListener() {
-            @Override
-            public void onItemClick(AdapterView<?> parent, View view, int position,
-                                    long id) {
-//                Intent intent = new Intent(MainActivity.this, SendMessage.class);
-                String message = "abc";
-                Log.d("MMainActivity","Listview item clicked at pos.: " + position + ", which equates to: " + mChannelList.GetChannelFromId(position).ChannelName);
-//                intent.putExtra(EXTRA_MESSAGE, message);
-//                startActivity(intent);
-            }
-        });
+
+    }
+
+    private void channelListItems() {
+
     }
 }
