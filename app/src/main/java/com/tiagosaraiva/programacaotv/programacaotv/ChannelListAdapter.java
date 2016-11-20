@@ -1,12 +1,11 @@
 package com.tiagosaraiva.programacaotv.programacaotv;
 
 import android.content.Context;
-
-import java.util.List;
-
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
+
+import java.util.List;
 
 /**
  * ProgramacaoTV
@@ -16,18 +15,28 @@ import android.widget.ArrayAdapter;
  */
 
 public class ChannelListAdapter extends ArrayAdapter<ChannelEntry> {
+    List<ChannelEntry> Items;
 
     public ChannelListAdapter(Context c, List<ChannelEntry> items) {
         super(c, 0, items);
+        this.Items = items;
     }
 
     @Override
     public View getView(int position, View convertView, ViewGroup parent) {
         ChannelListRowView itemView = (ChannelListRowView) convertView;
-        if (null == itemView)
+        if (itemView == null)
             itemView = ChannelListRowView.inflate(parent);
-        itemView.setItem(getItem(position));
+        ChannelEntry ce = getItem(position);
+        itemView.setItem(ce);
         return itemView;
     }
 
+    @Override
+    public int getCount() {
+        int ret = 0;
+        if (Items != null)
+            ret = Items.size();
+        return ret;
+    }
 }

@@ -14,11 +14,20 @@ public class ChannelEntry {
     String Sigla;
     String ChannelName;
     Date UpdateDate;
-    public ChannelEntry(int num, String sigla, String name, Date refreshed) {
+    boolean Favorite;
+    ChannelDBHelper Database;
+
+    public ChannelEntry(ChannelDBHelper database, int num, String sigla, String name, Date refreshed, boolean fav) {
         Number = num;
         Sigla = sigla;
         ChannelName = name;
         UpdateDate = refreshed;
+        Favorite = fav;
+        Database = database;
+    }
+
+    public void toggleFav() {
+        Database.toggleFav(this);
     }
 
 

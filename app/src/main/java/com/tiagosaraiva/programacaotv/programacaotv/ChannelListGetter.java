@@ -8,7 +8,6 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
@@ -21,12 +20,10 @@ import java.util.List;
  */
 
 public class ChannelListGetter extends AsyncTask<Void, Void, Void>{
-    public List<ChannelEntry> ChannelMap;
-
+    String CHANNELLISTNAME = "LIST";
     private Context mContext;
     private ChannelDBHelper mCache;
     private MainActivity mMainActivity;
-    String CHANNELLISTNAME = "LIST";
 
     public ChannelListGetter(MainActivity mainActivity) {
         mContext = mainActivity.getApplicationContext();
@@ -34,21 +31,21 @@ public class ChannelListGetter extends AsyncTask<Void, Void, Void>{
         mMainActivity = mainActivity;
     }
 
-    public List<String> GetChannelStringList()
-    {
-        List<String> ret = new ArrayList<>();
-        List<ChannelEntry> cl = GetCache().getChannelList();
-        for (int i =1; i < cl.size(); i++)
-        {
-            String name = cl.get(i).ChannelName;
-            ret.add(name);
-        }
-        return ret;
-    }
-    public ChannelEntry GetChannelFromId(int in)
-    {
-        return GetCache().getChannelList().get(in+1);
-    }
+//    public List<String> GetChannelStringList()
+//    {
+//        List<String> ret = new ArrayList<>();
+//        List<ChannelEntry> cl = GetCache().getChannelList();
+//        for (int i =1; i < cl.size(); i++)
+//        {
+//            String name = cl.get(i).ChannelName;
+//            ret.add(name);
+//        }
+//        return ret;
+//    }
+//    public ChannelEntry GetChannelFromId(int in)
+//    {
+//        return GetCache().getChannelList().get(in+1);
+//    }
 
     private JSONObject RetrieveChannelList()
     {
@@ -70,7 +67,7 @@ public class ChannelListGetter extends AsyncTask<Void, Void, Void>{
             JSONObject newChannelList = DownloadJSONAsync.downloadFromURL(action);
             if (newChannelList != null) {
                 Utilities.writeToFile(newChannelList.toString(), mContext, CHANNELLISTNAME);
-                mCache.cacheAddEntry(0, CHANNELLISTNAME, CHANNELLISTNAME, DateHelper.getCurrentDateTime());
+                mCache.cacheAddEntry(0, CHANNELLISTNAME, CHANNELLISTNAME, DateHelper.getCurrentDateTime(), false);
                 Log.d("ChannelListGetter", "Done downloading list from the web");
                 return newChannelList;
             }
@@ -121,7 +118,7 @@ public class ChannelListGetter extends AsyncTask<Void, Void, Void>{
                 for(int i = 0; i < channelList.length(); i++){
                     String channelName = channelList.getJSONObject(i).getString("Name");
                     String channelInitials = channelList.getJSONObject(i).getString("Sigla");
-                    ChannelEntry entry = new ChannelEntry(i+1, channelName, channelInitials, DateHelper.getCurrentDateTime());
+                    ChannelEntry entry = new ChannelEntry(mCache, i + 1, channelName, channelInitials, DateHelper.getCurrentDateTime(), false);
                     mCache.cacheAddEntry(entry);
                 }
             } catch (JSONException ex) {
@@ -152,7 +149,7 @@ public class ChannelListGetter extends AsyncTask<Void, Void, Void>{
     protected void onPostExecute(Void aVoid) {
         super.onPostExecute(aVoid);
         Log.d("ChannelListGetter","post execution of background activities");
-        mMainActivity.populateListview("ok");
+        mMainActivity.populateListview("finished getting list");
     }
 
     @Override
@@ -160,7 +157,16 @@ public class ChannelListGetter extends AsyncTask<Void, Void, Void>{
         super.onProgressUpdate(values);
     }
 
+    public List<ChannelEntry> getChannelMap(boolean favs) {
+        List<ChannelEntry> temp = mCache.getChannelList(favs);
+        return temp;
+    }
 
+    public List<ChannelEntry> getChannelMap() {
+        List<ChannelEntry> temp = mCache.getChannelList();
+        temp.remove(0);
+        return temp;
+    }
 
 
 }

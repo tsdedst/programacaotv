@@ -11,7 +11,6 @@ import android.util.Log;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import java.util.Objects;
 
 /**
  * ProgramacaoTV
@@ -22,7 +21,7 @@ import java.util.Objects;
  */
 
 class ChannelDBHelper extends SQLiteOpenHelper {
-    private static final int DATABASE_VERSION = 3;
+    private static final int DATABASE_VERSION = 5;
     private static final String DATABASE_NAME = "cache";
     private static final String TEXT_TYPE = " TEXT";
     private static final String DATETIME_TYPE = " DATETIME";
@@ -31,6 +30,7 @@ class ChannelDBHelper extends SQLiteOpenHelper {
     private static final String COLUMN_NAME_CHANNEL = "CHANNEL";
     private static final String COLUMN_NAME_SIGLA = "SIGLA";
     private static final String COLUMN_NAME_DATE = "DATE";
+    private static final String COLUMN_NAME_FAV = "FAVORITE";
     private static final String COLUMN_NAME_CHANNEL_NUMBER = "NUM";
 
     private static final String SQL_CREATE_TABLE =
@@ -38,6 +38,7 @@ class ChannelDBHelper extends SQLiteOpenHelper {
                     COLUMN_NAME_CHANNEL_NUMBER + " INTEGER PRIMARY KEY" + COMMA_SEP +
                     COLUMN_NAME_CHANNEL + TEXT_TYPE + COMMA_SEP +
                     COLUMN_NAME_SIGLA + TEXT_TYPE + COMMA_SEP +
+                    COLUMN_NAME_FAV + " BOOLEAN" + COMMA_SEP +
                     COLUMN_NAME_DATE + DATETIME_TYPE + " DEFAULT CURRENT_TIMESTAMP )";
     private static final String SQL_DELETE_ENTRIES =
             "DROP TABLE IF EXISTS " + TABLE_NAME;
@@ -64,8 +65,14 @@ class ChannelDBHelper extends SQLiteOpenHelper {
         onUpgrade(db, oldVersion, newVersion);
     }
 
-    public void cacheAddEntry(int num, String channelname, String channelInitials, Date updatedate) {
-        ChannelEntry out = new ChannelEntry(num, channelname, channelInitials, updatedate);
+    public void toggleFav(ChannelEntry channelEntry) {
+        Log.d("ChannelDBHelper", "Changing favourite status for: " + channelEntry.ChannelName);
+        channelEntry.Favorite = !channelEntry.Favorite;
+        cacheAddEntry(channelEntry);
+    }
+
+    public void cacheAddEntry(int num, String channelname, String channelInitials, Date updatedate, boolean fav) {
+        ChannelEntry out = new ChannelEntry(this, num, channelname, channelInitials, updatedate, fav);
         cacheAddEntry(out);
     }
     public void cacheAddEntry(ChannelEntry channelEntry)
@@ -81,6 +88,9 @@ class ChannelDBHelper extends SQLiteOpenHelper {
         values.put(COLUMN_NAME_CHANNEL_NUMBER, num);
         values.put(COLUMN_NAME_CHANNEL, channel);
         values.put(COLUMN_NAME_SIGLA, initials);
+        Log.d("ChannelDBHelper", "Writing channel do DB: " + channel + ", favorite: " + channelEntry.Favorite);
+        values.put(COLUMN_NAME_FAV, channelEntry.Favorite ? 1 : 0);
+
         values.put(COLUMN_NAME_DATE, DateHelper.getDateTimeString(date));
         // insert value
         int rowsaffected = writableCacheDatabase.update(TABLE_NAME, values, COLUMN_NAME_CHANNEL_NUMBER+"="+Integer.toString(num), null);
@@ -122,6 +132,7 @@ class ChannelDBHelper extends SQLiteOpenHelper {
                 COLUMN_NAME_CHANNEL_NUMBER,
                 COLUMN_NAME_CHANNEL,
                 COLUMN_NAME_SIGLA,
+                COLUMN_NAME_FAV,
                 COLUMN_NAME_DATE
         };
         Cursor c = readableCacheDatabase.query(
@@ -138,7 +149,12 @@ class ChannelDBHelper extends SQLiteOpenHelper {
         if (c != null) {
             c.moveToFirst();
             try {
-                ret = new ChannelEntry(c.getInt(0),c.getString(1),c.getString(2), DateHelper.getConvertedDateTime(c.getString(3)));
+                ret = new ChannelEntry(this,
+                        c.getInt(c.getColumnIndex(COLUMN_NAME_CHANNEL_NUMBER)),
+                        c.getString(c.getColumnIndex(COLUMN_NAME_SIGLA)),
+                        c.getString(c.getColumnIndex(COLUMN_NAME_CHANNEL)),
+                        DateHelper.getConvertedDateTime(c.getString(c.getColumnIndex(COLUMN_NAME_DATE))),
+                        (c.getInt(c.getColumnIndex(COLUMN_NAME_FAV)) == 1));
             } catch (CursorIndexOutOfBoundsException ex) {
                 Log.d("CACHEHELPER", "No Channel List present (first run?)");
             }
@@ -147,12 +163,27 @@ class ChannelDBHelper extends SQLiteOpenHelper {
         return ret;
     }
 
-    public List<ChannelEntry> getChannelList()
+    public List<ChannelEntry> getChannelList(boolean favs)
     {
+        String query = "SELECT * FROM " + TABLE_NAME;
+        if (favs)
+            query += " WHERE " + COLUMN_NAME_FAV + "=1";
+        else
+            query += " WHERE " + COLUMN_NAME_FAV + "=0";
+        return processQuery(query);
+    }
+
+    public List<ChannelEntry> getChannelList() {
+        String query = "SELECT * FROM " + TABLE_NAME;
+        return processQuery(query);
+
+    }
+
+    private ArrayList<ChannelEntry> processQuery(String query) {
         SQLiteDatabase readableCacheDatabase;
 
         readableCacheDatabase = this.getReadableDatabase();
-        Cursor cur = readableCacheDatabase.rawQuery("SELECT * FROM " + TABLE_NAME, null);
+        Cursor cur = readableCacheDatabase.rawQuery(query, null);
 
         ArrayList<ChannelEntry> temp = new ArrayList();
         if (cur != null) {
@@ -162,10 +193,12 @@ class ChannelDBHelper extends SQLiteOpenHelper {
                     String name = cur.getString(cur.getColumnIndex(COLUMN_NAME_CHANNEL));
                     String sigla = cur.getString(cur.getColumnIndex(COLUMN_NAME_SIGLA));
                     Date date = DateHelper.getConvertedDateTime(cur.getString(cur.getColumnIndex(COLUMN_NAME_DATE)));
-                    temp.add(new ChannelEntry(num, name, sigla, date));
+                    boolean favorite = cur.getInt(cur.getColumnIndex(COLUMN_NAME_FAV)) == 1;
+                    temp.add(new ChannelEntry(this, num, name, sigla, date, favorite));
                 } while (cur.moveToNext());
             }
         }
         return temp;
     }
+
 }
