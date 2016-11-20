@@ -15,6 +15,7 @@ public class ChannelEntry {
     String ChannelName;
     Date UpdateDate;
     boolean Favorite;
+    boolean IsDivider;
     ChannelDBHelper Database;
 
     public ChannelEntry(ChannelDBHelper database, int num, String sigla, String name, Date refreshed, boolean fav) {
@@ -24,6 +25,12 @@ public class ChannelEntry {
         UpdateDate = refreshed;
         Favorite = fav;
         Database = database;
+        IsDivider = false;
+    }
+    public ChannelEntry(String dividerText)
+    {
+        IsDivider = true;
+        ChannelName = dividerText;
     }
 
     public void toggleFav() {

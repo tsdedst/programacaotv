@@ -23,6 +23,8 @@ public class ChannelListRowView extends LinearLayout implements View.OnClickList
     TextView mChannelNameTextView ;
     ImageView mChannelFavoriteImageView ;
     ChannelEntry mChannelEntry;
+    MainActivity mMainActivity;
+
 
     public ChannelListRowView(Context context) {
         this(context, null);
@@ -43,16 +45,17 @@ public class ChannelListRowView extends LinearLayout implements View.OnClickList
     }
 
     private void setupChildren() {
+
         mChannelNameTextView = (TextView) findViewById(R.id.channel_name_textview);
         mChannelNameTextView.setOnClickListener(this);
         mChannelFavoriteImageView = (ImageView) findViewById(R.id.channel_favorite_imageview);
         mChannelFavoriteImageView.setOnClickListener(this);
     }
 
-    public void setItem(ChannelEntry item) {
+    public void setItem( ChannelEntry item) {
         mChannelEntry = item;
+
         mChannelNameTextView.setText(mChannelEntry.Number + ". " + mChannelEntry.ChannelName);
-        // TODO: set up image URL\
         Drawable id;
         if (mChannelEntry.Favorite)
             id = getResources().getDrawable(R.drawable.ic_star_black_48px);
@@ -73,15 +76,8 @@ public class ChannelListRowView extends LinearLayout implements View.OnClickList
             //do something with myString
             Log.d("ChannelListRowView", "item text or empty space was clicked: " + mChannelEntry.ChannelName);
         }
+        MainActivity ac = (MainActivity) getContext();
+        ac.populateListview("Favorites modified");
     }
-
-    public ImageView getChannelFavoriteImageView () {
-        return mChannelFavoriteImageView;
-    }
-
-    public TextView getChannelNameTextView() {
-        return mChannelNameTextView;
-    }
-
 
 }

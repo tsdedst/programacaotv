@@ -194,7 +194,8 @@ class ChannelDBHelper extends SQLiteOpenHelper {
                     String sigla = cur.getString(cur.getColumnIndex(COLUMN_NAME_SIGLA));
                     Date date = DateHelper.getConvertedDateTime(cur.getString(cur.getColumnIndex(COLUMN_NAME_DATE)));
                     boolean favorite = cur.getInt(cur.getColumnIndex(COLUMN_NAME_FAV)) == 1;
-                    temp.add(new ChannelEntry(this, num, name, sigla, date, favorite));
+                    if ((num != 0) && (name != "LIST"))
+                        temp.add(new ChannelEntry(this, num, sigla, name, date, favorite));
                 } while (cur.moveToNext());
             }
         }

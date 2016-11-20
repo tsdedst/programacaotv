@@ -8,6 +8,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
@@ -163,8 +164,18 @@ public class ChannelListGetter extends AsyncTask<Void, Void, Void>{
     }
 
     public List<ChannelEntry> getChannelMap() {
-        List<ChannelEntry> temp = mCache.getChannelList();
-        temp.remove(0);
+
+        List<ChannelEntry> temp = new ArrayList<ChannelEntry>();
+        List<ChannelEntry> favorites = mCache.getChannelList(true);
+        if (favorites.size() > 0)
+        {
+            temp.add(new ChannelEntry("Favorites"));
+            temp.addAll(favorites);
+            temp.add(new ChannelEntry("Channel List"));
+        }
+        temp.addAll(mCache.getChannelList(false));
+
+        //temp.remove(0);
         return temp;
     }
 

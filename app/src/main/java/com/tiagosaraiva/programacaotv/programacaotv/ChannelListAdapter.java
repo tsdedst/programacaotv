@@ -1,6 +1,7 @@
 package com.tiagosaraiva.programacaotv.programacaotv;
 
 import android.content.Context;
+import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
@@ -24,12 +25,34 @@ public class ChannelListAdapter extends ArrayAdapter<ChannelEntry> {
 
     @Override
     public View getView(int position, View convertView, ViewGroup parent) {
-        ChannelListRowView itemView = (ChannelListRowView) convertView;
-        if (itemView == null)
-            itemView = ChannelListRowView.inflate(parent);
+        View item;
+
         ChannelEntry ce = getItem(position);
-        itemView.setItem(ce);
-        return itemView;
+
+        if (ce.IsDivider)
+        {
+            ChannelListDividerView itemView;
+            if ((convertView != null) && (convertView instanceof ChannelListDividerView)) {
+                itemView = (ChannelListDividerView) convertView;
+            }
+            else {
+                itemView = ChannelListDividerView.inflate(parent);
+            }
+            itemView.setItem(ce.ChannelName);
+            item = itemView;
+        }
+        else {
+            ChannelListRowView itemView;
+            if ((convertView != null) && (convertView instanceof ChannelListRowView)) {
+                itemView = (ChannelListRowView) convertView;
+            }
+            else {
+                itemView = ChannelListRowView.inflate(parent);
+            }
+            itemView.setItem(ce);
+            item = itemView;
+        }
+        return item;
     }
 
     @Override
@@ -40,3 +63,4 @@ public class ChannelListAdapter extends ArrayAdapter<ChannelEntry> {
         return ret;
     }
 }
+
